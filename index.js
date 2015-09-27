@@ -1,10 +1,8 @@
 var _ = require('lodash');
-var Handlebars = require('handlebars');
 
 var fetchData = require('./lib/fetch-data');
 
 var defaults = {
-  cacheViews: true,
   views: {}
 };
 
@@ -39,31 +37,8 @@ exports.register = function(server, options, next) {
 
   });
 
-  server.expose('addHelper', function(name, fn) {
-    Handlebars.registerHelper(name, fn);
-  });
 
-  server.register({
-    register: require('vision')
-  }, function(err) {
-
-    if (err) {
-      return next(err);
-    }
-
-    server.views({
-      engines: { html: Handlebars },
-      path: options.viewsPath,
-      helpersPath: options.helpersPath,
-      partialsPath: options.partialsPath,
-      isCached: options.cacheViews
-    });
-
-
-    next();
-
-  });
-
+  next();
 };
 
 exports.register.attributes = {
