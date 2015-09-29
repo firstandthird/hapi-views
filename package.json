@@ -1,6 +1,6 @@
 {
   "name": "hapi-views",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Hapi view plugin",
   "main": "index.js",
   "scripts": {
