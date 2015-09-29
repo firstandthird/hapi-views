@@ -10,19 +10,20 @@ exports.register = function(server, options, next) {
 
   options = _.defaults(options, defaults);
 
-  var renderHandler = function(request, reply) {
+  var renderHandler = function(viewConfig) {
 
-    var viewConfig = options.views[request.route.path];
+    return function(request, reply) {
 
-    fetchData(viewConfig, options, function(err, data) {
+      fetchData(viewConfig, options, function(err, data) {
 
-      if (err) {
-        return reply(err);
-      }
+        if (err) {
+          return reply(err);
+        }
 
-      reply.view(viewConfig.view, data);
+        reply.view(viewConfig.view, data);
 
-    });
+      });
+    };
 
   };
 
@@ -32,7 +33,10 @@ exports.register = function(server, options, next) {
     server.route({
       path: path,
       method: 'get',
-      handler: renderHandler
+      handler: renderHandler(config),
+      config: {
+        cache: options.cache
+      }
     });
 
   });
