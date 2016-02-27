@@ -1,0 +1,6 @@
+.github/
+test/
+.eslintignore
+.eslintrc.json
+.node-version
+.travis.yml
