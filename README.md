@@ -6,8 +6,8 @@
 
 * define routes from config
 * pull in yaml data and pass it to the views
-* (coming soon) pull in data from an api endpoint
-* (coming soon) pull in data from a server method
+* pull in data from an api endpoint
+* pull in data from a server method
 
 ## Usage
 
@@ -15,10 +15,7 @@
 server.register({
   register: require('hapi-views'),
   options: {
-    viewsPath: __dirname + '/public/pages/',
     dataPath: __dirname + '/public/pages/',
-    partialsPath: __dirname + '/public/',
-    cacheViews: (process.env.NODE_ENV === 'production'),
     views: {
       '/': {
         view: 'landing/view',

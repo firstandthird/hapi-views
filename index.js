@@ -9,7 +9,8 @@ const defaults = {
 exports.register = function(server, options, next) {
   options = hoek.applyToDefaults(defaults, options);
 
-  const FetchData = new require('./lib/fetch-data')(server);
+  const Fetch = require('./lib/fetch-data');
+  const FetchData = new Fetch(server);
 
   if (options.cache) {
     server.log(
