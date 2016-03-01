@@ -1,48 +1,47 @@
-var _ = require('lodash');
+/* eslint new-cap: 0 */
+const async = require('async');
+const hoek = require('hoek');
 
-var fetchData = require('./lib/fetch-data');
-
-var defaults = {
+const defaults = {
   views: {}
 };
 
 exports.register = function(server, options, next) {
+  options = hoek.applyToDefaults(defaults, options);
 
-  options = _.defaults(options, defaults);
+  const Fetch = require('./lib/fetch-data');
+  const FetchData = new Fetch(server);
 
-  var renderHandler = function(viewConfig) {
+  if (options.cache) {
+    server.log(
+      ['error', 'hapi-views'],
+      'Cache option is deprecated, use options.routeConfig.cache instead'
+    );
+  }
 
+  const renderHandler = function(viewConfig) {
     return function(request, reply) {
-
-      fetchData(viewConfig, options, function(err, data) {
-
+      FetchData.fetch(request, viewConfig, options, (err, data) => {
         if (err) {
           return reply(err);
         }
 
-        reply.view(viewConfig.view, data);
-
+        return reply.view(viewConfig.view, data);
       });
     };
-
   };
 
   //routes
-  _.forIn(options.views, function(config, path) {
-
+  async.forEachOfSeries(options.views, (config, path, cb) => {
     server.route({
-      path: path,
+      path,
       method: 'get',
       handler: renderHandler(config),
-      config: {
-        cache: options.cache
-      }
+      config: options.routeConfig || {}
     });
 
-  });
-
-
-  next();
+    cb();
+  }, next);
 };
 
 exports.register.attributes = {
