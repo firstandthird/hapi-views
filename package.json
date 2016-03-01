@@ -4,7 +4,8 @@
   "description": "Hapi view plugin",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "lab -t 100 -a hoek -v",
+    "test-travis": "lab -r lcov | ./node_modules/.bin/coveralls"
   },
   "repository": {
     "type": "git",
@@ -22,7 +23,20 @@
   },
   "homepage": "https://github.com/firstandthird/hapi-views#readme",
   "dependencies": {
+    "async": "^1.5.2",
+    "hoek": "^3.0.4",
     "js-yaml": "^3.4.2",
-    "lodash": "^3.10.1"
+    "wreck": "^7.0.0"
+  },
+  "devDependencies": {
+    "coveralls": "^2.11.8",
+    "eslint": "^2.2.0",
+    "eslint-config-airbnb": "^6.0.2",
+    "eslint-config-firstandthird": "^1.5.0",
+    "eslint-plugin-react": "^4.1.0",
+    "handlebars": "^4.0.5",
+    "hapi": "^13.0.0",
+    "lab": "^10.0.0",
+    "vision": "^4.0.1"
   }
 }
