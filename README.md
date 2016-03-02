@@ -1,5 +1,8 @@
 # hapi-views
 
+[![Build Status](https://travis-ci.org/firstandthird/hapi-views.svg?branch=master)](https://travis-ci.org/firstandthird/hapi-views)
+[![Coverage Status](https://coveralls.io/repos/github/firstandthird/hapi-views/badge.svg?branch=master)](https://coveralls.io/github/firstandthird/hapi-views?branch=master)
+
 `hapi-views` is a hapi plugin that makes it very easy to register routes for views and pull in data. Great for pages that just need either some static data or data from an api.
 
 ## Features
@@ -27,7 +30,12 @@ server.register({
       },
       '/load': {
         view: 'landing/view',
-        method: 'serverLoad'
+        method: 'serverLoad',
+        routeConfig: { // Any valid hapi route config
+          plugins: {
+            'hapi-hello-world': {}
+          }
+        }
       }
     }
   }
