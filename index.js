@@ -37,7 +37,7 @@ exports.register = function(server, options, next) {
       path,
       method: 'get',
       handler: renderHandler(config),
-      config: options.routeConfig || {}
+      config: config.routeConfig || {}
     });
 
     cb();
