@@ -1,4 +1,9 @@
 
+1.0.1 / 2016-03-09
+==================
+
+  * fixed data transform to set the correct context
+
 0.0.3 / 2015-09-29
 ==================
 
