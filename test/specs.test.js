@@ -4,6 +4,7 @@
 const Lab = require('lab');
 const lab = exports.lab = Lab.script();
 const Hoek = require('hoek');
+const expect = require('code').expect;
 
 // test server
 const Hapi = require('hapi');
@@ -36,6 +37,10 @@ lab.experiment('specs', () => {
             '/methodtest': {
               view: 'method',
               method: 'testerino'
+            },
+            '/inject': {
+              inject: '/api',
+              view: 'data'
             },
             '/data': {
               view: 'data',
@@ -123,6 +128,23 @@ lab.experiment('specs', () => {
       Hoek.assert(response.result.indexOf('Jack') !== -1, 'Expected output not found');
       Hoek.assert(response.result.indexOf('/data') !== -1, 'Expected output not found');
       Hoek.assert(response.result.indexOf('true') !== -1, 'Expected output not found');
+      done();
+    });
+  });
+
+  lab.test('inject', done => {
+    server.inject({
+      url: '/inject'
+    }, response => {
+      const context = response.request.response.source.context;
+      expect(context).to.equal({
+        yaml: {},
+        api: {},
+        method: {},
+        inject: [
+          { test: true }
+        ]
+      });
       done();
     });
   });
