@@ -4,7 +4,6 @@
 const Lab = require('lab');
 const lab = exports.lab = Lab.script();
 const Hoek = require('hoek');
-const async = require('async');
 
 // test server
 const Hapi = require('hapi');
@@ -30,6 +29,10 @@ lab.experiment('specs', () => {
               view: 'api',
               api: 'http://jsonplaceholder.typicode.com/posts?id=1'
             },
+            '/apivar/{id}': {
+              view: 'api',
+              api: 'http://jsonplaceholder.typicode.com/posts?id={{params.id}}'
+            },
             '/methodtest': {
               view: 'method',
               method: 'testerino'
@@ -38,7 +41,11 @@ lab.experiment('specs', () => {
               view: 'data',
               yaml: 'test1.yaml',
               data: {
-                'test.ok': 'yaml.0.test1'
+                name: 'Jack',
+                url: '{{request.url.path}}',
+                test: {
+                  ok: '{{yaml[0].test1}}'
+                }
               }
             }
           }
@@ -90,6 +97,16 @@ lab.experiment('specs', () => {
     });
   });
 
+  lab.test('api with variables', done => {
+    server.inject({
+      url: '/apivar/1'
+    }, response => {
+      Hoek.assert(response.result.indexOf('1') !== -1, 'Expected output not found');
+      done();
+    });
+  });
+
+
   lab.test('method', done => {
     server.inject({
       url: '/methodtest'
@@ -103,6 +120,8 @@ lab.experiment('specs', () => {
     server.inject({
       url: '/data'
     }, response => {
+      Hoek.assert(response.result.indexOf('Jack') !== -1, 'Expected output not found');
+      Hoek.assert(response.result.indexOf('/data') !== -1, 'Expected output not found');
       Hoek.assert(response.result.indexOf('true') !== -1, 'Expected output not found');
       done();
     });

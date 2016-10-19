@@ -24,9 +24,9 @@ server.register({
         view: 'landing/view',
         yaml: 'landing/data.yaml'
       },
-      '/comments': {
+      '/comments/{id}': {
         view: 'landing/view',
-        api: 'http://jsonplaceholder.typicode.com/comments/1'
+        api: 'http://jsonplaceholder.typicode.com/comments/{{params.id}}'
       },
       '/load': {
         view: 'landing/view',
