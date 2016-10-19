@@ -1,4 +1,12 @@
 
+2.1.0 / 2016-10-19
+==================
+
+  * updated readme
+  * added inject to do a server.inject
+  * updated variable replacement to use {} instead of {{}} to match hapi
+  * added debug option to log data passed to view
+
 2.0.0 / 2016-10-19
 ==================
 
