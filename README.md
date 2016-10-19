@@ -26,7 +26,7 @@ server.register({
       },
       '/comments/{id}': {
         view: 'landing/view',
-        api: 'http://jsonplaceholder.typicode.com/comments/{{params.id}}'
+        api: 'http://jsonplaceholder.typicode.com/comments/{params.id}'
       },
       '/load': {
         view: 'landing/view',
