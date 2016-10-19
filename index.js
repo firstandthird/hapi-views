@@ -3,6 +3,7 @@ const async = require('async');
 const hoek = require('hoek');
 
 const defaults = {
+  debug: false,
   views: {}
 };
 
@@ -24,6 +25,13 @@ exports.register = function(server, options, next) {
       FetchData.fetch(request, viewConfig, options, (err, data) => {
         if (err) {
           return reply(err);
+        }
+
+        if (options.debug) {
+          server.log(['hapi-views', 'debug'], {
+            data,
+            path: request.url.path
+          });
         }
 
         return reply.view(viewConfig.view, data);
