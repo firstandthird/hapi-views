@@ -1,4 +1,12 @@
 
+2.0.0 / 2016-10-19
+==================
+
+  * BREAKING. Swapped hoek with varson.
+  * updated depedencies
+  * updated to make tests pass
+  * added node 6 to travis
+
 1.0.1 / 2016-03-09
 ==================
 
