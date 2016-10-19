@@ -31,7 +31,7 @@ lab.experiment('specs', () => {
             },
             '/apivar/{id}': {
               view: 'api',
-              api: 'http://jsonplaceholder.typicode.com/posts?id={{params.id}}'
+              api: 'http://jsonplaceholder.typicode.com/posts?id={params.id}'
             },
             '/methodtest': {
               view: 'method',
@@ -42,9 +42,9 @@ lab.experiment('specs', () => {
               yaml: 'test1.yaml',
               data: {
                 name: 'Jack',
-                url: '{{request.url.path}}',
+                url: '{request.url.path}',
                 test: {
-                  ok: '{{yaml[0].test1}}'
+                  ok: '{yaml[0].test1}'
                 }
               }
             }

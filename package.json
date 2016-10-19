@@ -26,16 +26,18 @@
   "dependencies": {
     "async": "2.1.2",
     "js-yaml": "^3.4.2",
-    "varson": "^0.4.0",
+    "varson": "^0.5.0",
     "wreck": "10.0.0"
   },
   "devDependencies": {
+    "code": "^4.0.0",
     "coveralls": "^2.11.8",
     "eslint": "3.8.1",
     "eslint-config-firstandthird": "3.0.2",
     "eslint-plugin-import": "^2.0.1",
     "handlebars": "^4.0.5",
     "hapi": "^15.1.1",
+    "hoek": "^4.1.0",
     "lab": "^11.1.0",
     "vision": "^4.0.1"
   }
