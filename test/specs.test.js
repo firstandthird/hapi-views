@@ -38,8 +38,19 @@ lab.experiment('specs', () => {
               view: 'method',
               method: 'testerino'
             },
+            '/methodmulti': {
+              view: 'method',
+              method: [ 'testerino', 'testmethod2' ]
+            },
             '/inject': {
               inject: '/api',
+              view: 'data'
+            },
+            '/injectmap': {
+              inject: {
+                api: '/api',
+                apivar: '/apivar/1'
+              },
               view: 'data'
             },
             '/data': {
@@ -49,7 +60,7 @@ lab.experiment('specs', () => {
                 name: 'Jack',
                 url: '{request.url.path}',
                 test: {
-                  ok: '{yaml[0].test1}'
+                  ok: '{yaml.test1}'
                 }
               }
             }
@@ -75,6 +86,10 @@ lab.experiment('specs', () => {
         next(null, 'test');
       });
 
+      server.method('testmethod2', function(next) {
+        next(null, 'test2');
+      });
+
       server.start((err) => {
         Hoek.assert(!err, err);
         console.log(`Server started at: ${server.info.uri}`);
@@ -88,7 +103,15 @@ lab.experiment('specs', () => {
     server.inject({
       url: '/yaml'
     }, response => {
-      Hoek.assert(response.result.indexOf('true') !== -1, 'Expected output not found');
+      const context = response.request.response.source.context;
+      expect(context).to.equal({
+        api: {},
+        method: {},
+        inject: {},
+        yaml: {
+          test1: 'true'
+        }
+      });
       done();
     });
   });
@@ -132,6 +155,35 @@ lab.experiment('specs', () => {
     });
   });
 
+  lab.test('methods', done => {
+    server.inject({
+      url: '/methodmulti'
+    }, response => {
+      const context = response.request.response.source.context;
+      expect(context).to.equal({
+        yaml: {},
+        api: {},
+        method: {
+          testerino: 'test',
+          testmethod2: 'test2'
+        },
+        inject: {}
+      });
+      done();
+    });
+  });
+
+  lab.test('data', done => {
+    server.inject({
+      url: '/data'
+    }, response => {
+      Hoek.assert(response.result.indexOf('Jack') !== -1, 'Expected output not found');
+      Hoek.assert(response.result.indexOf('/data') !== -1, 'Expected output not found');
+      Hoek.assert(response.result.indexOf('true') !== -1, 'Expected output not found');
+      done();
+    });
+  });
+
   lab.test('inject', done => {
     server.inject({
       url: '/inject'
@@ -141,9 +193,25 @@ lab.experiment('specs', () => {
         yaml: {},
         api: {},
         method: {},
-        inject: [
-          { test: true }
-        ]
+        inject: { test: true }
+      });
+      done();
+    });
+  });
+
+  lab.test('injectmap', done => {
+    server.inject({
+      url: '/injectmap'
+    }, response => {
+      const context = response.request.response.source.context;
+      expect(context).to.equal({
+        yaml: {},
+        api: {},
+        method: {},
+        inject: {
+          api: { test: true },
+          apivar: '1\n'
+        }
       });
       done();
     });
