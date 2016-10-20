@@ -8,7 +8,9 @@ const expect = require('code').expect;
 
 // test server
 const Hapi = require('hapi');
-const server = new Hapi.Server();
+const server = new Hapi.Server({
+  debug: { request: '*', log: 'hapi-views' }
+});
 
 server.connection();
 
@@ -20,6 +22,7 @@ lab.experiment('specs', () => {
       {
         register: require('../'),
         options: {
+          //debug: true,
           dataPath: `${process.cwd()}/test/yaml`,
           views: {
             '/yaml': {
@@ -63,6 +66,11 @@ lab.experiment('specs', () => {
                   ok: '{yaml.test1}'
                 }
               }
+            },
+            '/data-string': {
+              view: 'data',
+              yaml: 'test1.yaml',
+              data: 'yaml'
             }
           }
         }
@@ -180,6 +188,18 @@ lab.experiment('specs', () => {
       Hoek.assert(response.result.indexOf('Jack') !== -1, 'Expected output not found');
       Hoek.assert(response.result.indexOf('/data') !== -1, 'Expected output not found');
       Hoek.assert(response.result.indexOf('true') !== -1, 'Expected output not found');
+      done();
+    });
+  });
+
+  lab.test('data as string', done => {
+    server.inject({
+      url: '/data-string'
+    }, response => {
+      const context = response.request.response.source.context;
+      expect(context).to.equal({
+        test1: 'true'
+      });
       done();
     });
   });
