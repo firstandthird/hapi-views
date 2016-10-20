@@ -1,4 +1,11 @@
 
+3.0.0 / 2016-10-20
+==================
+
+  * added ?json=1 to output the raw data
+  * support setting data as a string to just return that value
+  * support maps for yaml, api and inject
+
 2.1.1 / 2016-10-19
 ==================
 
