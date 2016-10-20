@@ -236,4 +236,23 @@ lab.experiment('specs', () => {
       done();
     });
   });
+
+  lab.test('?json=1', done => {
+    server.inject({
+      url: '/injectmap?json=1'
+    }, response => {
+      expect(response.headers['content-type']).to.contain('application/json');
+      const context = response.result;
+      expect(context).to.equal({
+        yaml: {},
+        api: {},
+        method: {},
+        inject: {
+          api: { test: true },
+          apivar: '1\n'
+        }
+      });
+      done();
+    });
+  });
 });

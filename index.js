@@ -34,6 +34,9 @@ exports.register = function(server, options, next) {
           });
         }
 
+        if (request.query.json === '1') {
+          return reply(data).type('application/json');
+        }
         return reply.view(viewConfig.view, data);
       });
     };
