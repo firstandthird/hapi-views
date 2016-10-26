@@ -5,7 +5,7 @@ const Lab = require('lab');
 const lab = exports.lab = Lab.script();
 const Hoek = require('hoek');
 const expect = require('code').expect;
-
+const EOL = require('os').EOL;
 // test server
 const Hapi = require('hapi');
 const server = new Hapi.Server({
@@ -43,7 +43,7 @@ lab.experiment('specs', () => {
             },
             '/methodmulti': {
               view: 'method',
-              method: [ 'testerino', 'testmethod2' ]
+              method: ['testerino', 'testmethod2', 'myScope.myMethod']
             },
             '/inject': {
               inject: '/api',
@@ -98,6 +98,10 @@ lab.experiment('specs', () => {
         next(null, 'test2');
       });
 
+      server.method('myScope.myMethod', function(next) {
+        next(null, 'test3');
+      });
+
       server.start((err) => {
         Hoek.assert(!err, err);
         console.log(`Server started at: ${server.info.uri}`);
@@ -105,7 +109,6 @@ lab.experiment('specs', () => {
       });
     });
   });
-
   // tests
   lab.test('yaml', done => {
     server.inject({
@@ -142,7 +145,6 @@ lab.experiment('specs', () => {
     });
   });
 
-
   lab.test('method', done => {
     server.inject({
       url: '/methodtest'
@@ -151,7 +153,6 @@ lab.experiment('specs', () => {
       done();
     });
   });
-
   lab.test('data', done => {
     server.inject({
       url: '/data'
@@ -173,14 +174,14 @@ lab.experiment('specs', () => {
         api: {},
         method: {
           testerino: 'test',
-          testmethod2: 'test2'
+          testmethod2: 'test2',
+          'myScope.myMethod': 'test3'
         },
         inject: {}
       });
       done();
     });
   });
-
   lab.test('data', done => {
     server.inject({
       url: '/data'
@@ -230,7 +231,7 @@ lab.experiment('specs', () => {
         method: {},
         inject: {
           api: { test: true },
-          apivar: '1\n'
+          apivar: `1${EOL}`
         }
       });
       done();
@@ -249,7 +250,7 @@ lab.experiment('specs', () => {
         method: {},
         inject: {
           api: { test: true },
-          apivar: '1\n'
+          apivar: `1${EOL}`
         }
       });
       done();
