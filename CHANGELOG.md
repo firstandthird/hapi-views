@@ -1,4 +1,10 @@
 
+3.1.0 / 2016-10-31
+==================
+
+  * supports nested server methods
+  * updated eslint
+
 3.0.0 / 2016-10-20
 ==================
 
