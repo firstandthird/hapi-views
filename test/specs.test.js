@@ -5,16 +5,13 @@ const Lab = require('lab');
 const lab = exports.lab = Lab.script();
 const Hoek = require('hoek');
 const expect = require('code').expect;
-const EOL = require('os').EOL;
-// test server
 const Hapi = require('hapi');
-const server = new Hapi.Server({
-  debug: { request: '*', log: 'hapi-views' }
-});
-
-server.connection();
-
+const EOL = require('os').EOL;
 lab.experiment('specs', () => {
+  const server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' }
+  });
+  server.connection();
   lab.before(start => {
     // start server
     server.register([
@@ -253,6 +250,60 @@ lab.experiment('specs', () => {
           apivar: `1${EOL}`
         }
       });
+      done();
+    });
+  });
+});
+
+lab.experiment('methods with args', () => {
+  const server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' }
+  });
+
+  server.connection();
+
+  lab.before(start => {
+    server.register([
+      require('vision'),
+      {
+        register: require('../'),
+        options: {
+          //debug: true,
+          data: `${process.cwd()}/test/yaml`,
+          views: {
+            '/methodWithArgs/{name}/{score}': {
+              view: 'method',
+              method: 'myScope.myMethod',
+              // three args, one static and two derived from the request:
+              args: [true, '{params.name}', '{params.score}']
+            }
+          }
+        }
+      }], error => {
+      Hoek.assert(!error, error);
+
+      server.views({
+        engines: { html: require('handlebars') },
+        path: `${__dirname}/views`
+      });
+
+      server.start((err) => {
+        Hoek.assert(!err, err);
+        console.log(`Server started at: ${server.info.uri}`);
+        start();
+      });
+    });
+  });
+
+  lab.test('can load', (done) => {
+    server.method('myScope.myMethod', function(arg1, arg2, arg3, next) {
+      next(null, arg1 + arg2 + arg3);
+    });
+    server.inject({
+      url: '/methodWithArgs/56/hello',
+      method: 'get'
+    }, (response) => {
+      expect(response.result).to.include('true56hello');
       done();
     });
   });
