@@ -7,6 +7,7 @@ const Hoek = require('hoek');
 const expect = require('code').expect;
 const Hapi = require('hapi');
 const EOL = require('os').EOL;
+
 lab.experiment('specs', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
@@ -275,6 +276,16 @@ lab.experiment('methods with args', () => {
               method: 'myScope.myMethod',
               // three args, one static and two derived from the request:
               args: [true, '{request.params.name}', '{request.query.score}']
+            },
+            '/multiMethods/{name}/{harbinger}': {
+              view: 'method',
+              method: [{
+                method: 'someMethod',
+                args: ['{request.params.name}']
+              }, {
+                method: 'someOtherMethod',
+                args: ['{request.params.harbinger}', '{request.query.score}']
+              }]
             }
           }
         }
@@ -286,6 +297,16 @@ lab.experiment('methods with args', () => {
         path: `${__dirname}/views`
       });
 
+      server.method('myScope.myMethod', function(arg1, arg2, arg3, next) {
+        next(null, arg1 + arg2 + arg3);
+      });
+      server.method('someMethod', function(name, next) {
+        next(null, name);
+      });
+      server.method('someOtherMethod', function(harbinger, score, next) {
+        next(null, `${harbinger}+${score}`);
+      });
+
       server.start((err) => {
         Hoek.assert(!err, err);
         start();
@@ -293,15 +314,23 @@ lab.experiment('methods with args', () => {
     });
   });
 
-  lab.test('can load', (done) => {
-    server.method('myScope.myMethod', function(arg1, arg2, arg3, next) {
-      next(null, arg1 + arg2 + arg3);
-    });
+  lab.test('can pass args to a method', (done) => {
     server.inject({
       url: '/methodWithArgs/Jack?score=56',
       method: 'get'
     }, (response) => {
       expect(response.result).to.include('trueJack56');
+      done();
+    });
+  });
+
+  lab.test('can pass args to multiple methods', (done) => {
+    server.inject({
+      url: '/multiMethods/Jack/albatross?score=70',
+      method: 'get'
+    }, (response) => {
+      console.log(typeof response.result)
+      // expect(response2.result).to.include('trueJack56');
       done();
     });
   });
