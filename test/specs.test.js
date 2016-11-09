@@ -1,4 +1,4 @@
-/* eslint strict: 0, max-len: 0, no-console: 0, prefer-arrow-callback: 0 */
+/* eslint strict: 0, max-len: 0, prefer-arrow-callback: 0 */
 'use strict';
 
 const Lab = require('lab');
@@ -101,7 +101,6 @@ lab.experiment('specs', () => {
 
       server.start((err) => {
         Hoek.assert(!err, err);
-        console.log(`Server started at: ${server.info.uri}`);
         start();
       });
     });
@@ -257,7 +256,7 @@ lab.experiment('specs', () => {
 
 lab.experiment('methods with args', () => {
   const server = new Hapi.Server({
-    debug: { request: '*', log: 'hapi-views' }
+    debug: { log: 'hapi-views' }
   });
 
   server.connection();
@@ -289,7 +288,6 @@ lab.experiment('methods with args', () => {
 
       server.start((err) => {
         Hoek.assert(!err, err);
-        console.log(`Server started at: ${server.info.uri}`);
         start();
       });
     });
