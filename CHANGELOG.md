@@ -1,4 +1,9 @@
 
+3.2.2 / 2016-11-09
+==================
+
+  * errors from api and inject calls bubble back up
+
 3.2.1 / 2016-11-09
 ==================
 
