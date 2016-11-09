@@ -273,9 +273,11 @@ lab.experiment('methods with args', () => {
           views: {
             '/methodWithArgs/{name}': {
               view: 'method',
-              method: 'myScope.myMethod',
+              method: {
+                method: 'myScope.myMethod',
+                args: [true, '{request.params.name}', '{request.query.score}']
+              }
               // three args, one static and two derived from the request:
-              args: [true, '{request.params.name}', '{request.query.score}']
             },
             '/multiMethods/{name}/{harbinger}': {
               view: 'methodWithArgs',
