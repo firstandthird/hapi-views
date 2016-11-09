@@ -278,7 +278,7 @@ lab.experiment('methods with args', () => {
               args: [true, '{request.params.name}', '{request.query.score}']
             },
             '/multiMethods/{name}/{harbinger}': {
-              view: 'method',
+              view: 'methodWithArgs',
               method: [{
                 method: 'someMethod',
                 args: ['{request.params.name}']
@@ -329,8 +329,8 @@ lab.experiment('methods with args', () => {
       url: '/multiMethods/Jack/albatross?score=70',
       method: 'get'
     }, (response) => {
-      console.log(typeof response.result)
-      // expect(response2.result).to.include('trueJack56');
+      expect(response.result).to.include('Jack');
+      expect(response.result).to.include('albatross+70');
       done();
     });
   });
