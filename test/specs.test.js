@@ -271,11 +271,11 @@ lab.experiment('methods with args', () => {
           //debug: true,
           data: `${process.cwd()}/test/yaml`,
           views: {
-            '/methodWithArgs/{name}/{score}': {
+            '/methodWithArgs/{name}': {
               view: 'method',
               method: 'myScope.myMethod',
               // three args, one static and two derived from the request:
-              args: [true, '{params.name}', '{params.score}']
+              args: [true, '{request.params.name}', '{request.query.score}']
             }
           }
         }
@@ -300,10 +300,10 @@ lab.experiment('methods with args', () => {
       next(null, arg1 + arg2 + arg3);
     });
     server.inject({
-      url: '/methodWithArgs/56/hello',
+      url: '/methodWithArgs/Jack?score=56',
       method: 'get'
     }, (response) => {
-      expect(response.result).to.include('true56hello');
+      expect(response.result).to.include('trueJack56');
       done();
     });
   });
