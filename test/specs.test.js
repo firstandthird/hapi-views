@@ -256,13 +256,14 @@ lab.experiment('specs', () => {
 });
 
 lab.experiment('methods with args', () => {
-  const server = new Hapi.Server({
-    debug: { log: 'hapi-views' }
-  });
-
-  server.connection();
+  let server;
 
   lab.before(start => {
+    server = new Hapi.Server({
+      debug: { log: ['hapi-views', 'error'], request: ['error'] }
+    });
+
+    server.connection();
     server.register([
       require('vision'),
       {
@@ -288,6 +289,19 @@ lab.experiment('methods with args', () => {
                 name: 'someOtherMethod',
                 args: ['{request.params.harbinger}', '{request.query.score}']
               }]
+            },
+            '/multiMethodsObj/{name}/{harbinger}': {
+              view: 'method',
+              method: {
+                someMethod: {
+                  name: 'someMethod',
+                  args: ['{request.params.name}']
+                },
+                someOtherMethod: {
+                  name: 'someOtherMethod',
+                  args: ['{request.params.harbinger}', '{request.query.score}']
+                }
+              }
             }
           }
         }
@@ -336,9 +350,28 @@ lab.experiment('methods with args', () => {
       done();
     });
   });
+  lab.test('can pass args to multiple methods (obj)', (done) => {
+    server.inject({
+      url: '/multiMethodsObj/Jack/albatross?score=70',
+      method: 'get'
+    }, (response) => {
+      expect(response.statusCode).to.equal(200);
+      const context = response.request.response.source.context;
+      expect(context).to.equal({
+        api: {},
+        method: {
+          someMethod: 'Jack',
+          someOtherMethod: 'albatross+70'
+        },
+        inject: {},
+        yaml: { }
+      });
+      done();
+    });
+  });
 });
 
-lab.experiment('api', { only: true }, () => {
+lab.experiment('api', () => {
   const server = new Hapi.Server({
     debug: { log: 'hapi-views' }
   });
