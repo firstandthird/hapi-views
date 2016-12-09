@@ -69,6 +69,11 @@ lab.experiment('specs', () => {
               view: 'data',
               yaml: 'test1.yaml',
               data: 'yaml'
+            },
+            '/data-method': {
+              view: 'data',
+              yaml: 'test1.yaml',
+              dataMethod: 'handle.data'
             }
           }
         }
@@ -99,6 +104,7 @@ lab.experiment('specs', () => {
       server.method('myScope.myMethod', function(next) {
         next(null, 'test3');
       });
+
 
       server.start((err) => {
         Hoek.assert(!err, err);
@@ -193,6 +199,21 @@ lab.experiment('specs', () => {
   lab.test('data as string', done => {
     server.inject({
       url: '/data-string'
+    }, response => {
+      const context = response.request.response.source.context;
+      expect(context).to.equal({
+        test1: 'true'
+      });
+      done();
+    });
+  });
+
+  lab.test('dataMethod call that server method for processing data', done => {
+    server.method('handle.data', function(results, next) {
+      next(null, results.yaml);
+    });
+    server.inject({
+      url: '/data-method'
     }, response => {
       const context = response.request.response.source.context;
       expect(context).to.equal({
