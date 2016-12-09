@@ -1,4 +1,9 @@
 
+3.3.0 / 2016-12-08
+==================
+
+  * added dataMethod to manipulate the data with a server method
+
 3.2.3 / 2016-11-21
 ==================
 
