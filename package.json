@@ -34,9 +34,9 @@
   "devDependencies": {
     "code": "^4.0.0",
     "coveralls": "^2.11.8",
-    "eslint": "^3.4.0",
+    "eslint": "^3.9.1",
     "eslint-config-firstandthird": "^3.0.2",
-    "eslint-plugin-import": "^1.14.0",
+    "eslint-plugin-import": "^2.1.0",
     "handlebars": "^4.0.5",
     "hapi": "^15.1.1",
     "lab": "^11.1.0",
