@@ -147,7 +147,16 @@ lab.experiment('api', () => {
     server.inject({
       url: '/apitest'
     }, response => {
-      Hoek.assert(response.result.indexOf('1') !== -1, 'Expected output not found');
+      const context = response.request.response.source.context;
+      expect(context).to.equal({ yaml: {},
+        method: {},
+        inject: {},
+        api: [ { userId: 1,
+             id: 1,
+             title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+             body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+         ]
+      });
       done();
     });
   });
@@ -156,7 +165,16 @@ lab.experiment('api', () => {
     server.inject({
       url: '/apivar/1'
     }, response => {
-      Hoek.assert(response.result.indexOf('1') !== -1, 'Expected output not found');
+      const context = response.request.response.source.context;
+      expect(context).to.equal({ yaml: {},
+        method: {},
+        inject: {},
+        api: [ { userId: 1,
+             id: 1,
+             title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+             body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+         ]
+      });
       done();
     });
   });
@@ -252,7 +270,16 @@ lab.experiment('methods', () => {
     server.inject({
       url: '/apitest'
     }, response => {
-      Hoek.assert(response.result.indexOf('1') !== -1, 'Expected output not found');
+      const context = response.request.response.source.context;
+      expect(context).to.equal({ yaml: {},
+        method: {},
+        inject: {},
+        api: [ { userId: 1,
+             id: 1,
+             title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+             body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+         ]
+      });
       done();
     });
   });
@@ -261,7 +288,8 @@ lab.experiment('methods', () => {
     server.inject({
       url: '/methodtest'
     }, response => {
-      Hoek.assert(response.result.indexOf('test') !== -1, 'Expected output not found');
+      const context = response.request.response.source.context;
+      expect(context).to.equal({ yaml: {}, api: {}, method: 'test', inject: {} });
       done();
     });
   });
@@ -269,9 +297,8 @@ lab.experiment('methods', () => {
     server.inject({
       url: '/data'
     }, response => {
-      Hoek.assert(response.result.indexOf('Jack') !== -1, 'Expected output not found');
-      Hoek.assert(response.result.indexOf('/data') !== -1, 'Expected output not found');
-      Hoek.assert(response.result.indexOf('true') !== -1, 'Expected output not found');
+      const context = response.request.response.source.context;
+      expect(context).to.equal({ name: 'Jack', url: '/data', test: { ok: true } });
       done();
     });
   });
@@ -298,9 +325,8 @@ lab.experiment('methods', () => {
     server.inject({
       url: '/data'
     }, response => {
-      Hoek.assert(response.result.indexOf('Jack') !== -1, 'Expected output not found');
-      Hoek.assert(response.result.indexOf('/data') !== -1, 'Expected output not found');
-      Hoek.assert(response.result.indexOf('true') !== -1, 'Expected output not found');
+      const context = response.request.response.source.context;
+      expect(context).to.equal({ name: 'Jack', url: '/data', test: { ok: true } });
       done();
     });
   });
