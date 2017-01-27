@@ -39,7 +39,7 @@
     "eslint-plugin-import": "2.2.0",
     "handlebars": "^4.0.5",
     "hapi": "^16.0.2",
-    "lab": "^11.1.0",
+    "lab": "^12.1.0",
     "vision": "^4.0.1"
   }
 }
