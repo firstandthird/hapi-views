@@ -1,7 +1,8 @@
+'use strict';
 /* eslint new-cap: 0 */
 const async = require('async');
 const hoek = require('hoek');
-
+const merge = require('lodash.merge');
 const defaults = {
   debug: false,
   views: {}
@@ -22,21 +23,29 @@ exports.register = function(server, options, next) {
 
   const renderHandler = function(viewConfig) {
     return function(request, reply) {
-      FetchData.fetch(request, viewConfig, options, (err, data) => {
+      async.autoInject({
+        locals: done => FetchData.fetch(request, viewConfig, options, done),
+        globals: done => {
+          if (!options.globals) {
+            return done(null, {});
+          }
+          FetchData.fetch(request, options.globals, options, done);
+        }
+      }, (err, data) => {
         if (err) {
           return reply(err);
         }
-
+        const combinedData = merge(data.globals, data.locals);
         if (options.debug) {
           server.log(['hapi-views', 'debug'], {
-            data,
+            data: combinedData,
             path: request.url.path
           });
         }
         if (request.query.json === '1') {
-          return reply(data).type('application/json');
+          return reply(combinedData).type('application/json');
         }
-        return reply.view(viewConfig.view, data);
+        return reply.view(viewConfig.view, combinedData);
       });
     };
   };

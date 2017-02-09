@@ -670,3 +670,69 @@ lab.experiment('errors', () => {
     });
   });
 });
+
+lab.experiment('globals', () => {
+  const server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' }
+  });
+  server.connection();
+  lab.before(start => {
+    // start server
+    server.register([
+      require('vision'),
+      {
+        register: require('../'),
+        options: {
+          dataPath: `${process.cwd()}/test/yaml`,
+          views: {
+            '/apitest': {
+              view: 'api',
+            },
+            '/apivar/{id}': {
+              view: 'api',
+              method: ['testerino']
+            },
+          },
+          globals: {
+            yaml: 'test1.yaml',
+            method: ['testmethod2'],
+            api: 'http://jsonplaceholder.typicode.com/posts?id=1'
+          }
+        }
+      }], error => {
+      Hoek.assert(!error, error);
+      server.method('testmethod2', function(next) {
+        next(null, 'test2');
+      });
+      server.method('testerino', function(next) {
+        next(null, 'test');
+      });
+      server.views({
+        engines: { html: require('handlebars') },
+        path: `${__dirname}/views`
+      });
+      server.route({
+        method: 'GET',
+        path: '/api',
+        handler(request, reply) {
+          reply({ test: true });
+        }
+      });
+      start();
+    });
+  });
+  lab.test('global api', done => {
+    server.inject({
+      url: '/apivar/1'
+    }, response => {
+      const context = response.request.response.source.context;
+      expect(context.method).to.equal({
+        testmethod2: 'test2', testerino: 'test'
+      });
+      expect(context.yaml).to.equal({
+        test1: 'true'
+      });
+      done();
+    });
+  });
+});
