@@ -690,7 +690,9 @@ lab.experiment('globals', () => {
             },
             '/apivar/{id}': {
               view: 'api',
-              method: ['testerino']
+              method: ['testerino'],
+              api: 'http://jsonplaceholder.typicode.com/posts?id=23',
+              yaml: 'test2.yaml'
             },
           },
           globals: {
@@ -726,10 +728,19 @@ lab.experiment('globals', () => {
       url: '/apivar/1'
     }, response => {
       const context = response.request.response.source.context;
+      // combines if they are arrays:
       expect(context.method).to.equal({
         testmethod2: 'test2', testerino: 'test'
       });
+      expect(context.api).to.equal([
+        { userId: 3,
+          id: 23,
+          title: 'maxime id vitae nihil numquam',
+          body: 'veritatis unde neque eligendi\nquae quod architecto quo neque vitae\nest illo sit tempora doloremque fugit quod\net et vel beatae sequi ullam sed tenetur perspiciatis'
+        }
+      ]);
       expect(context.yaml).to.equal({
+        global: 'much global',
         test1: 'true'
       });
       done();
