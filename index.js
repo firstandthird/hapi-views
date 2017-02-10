@@ -33,6 +33,19 @@ exports.register = function(server, options, next) {
         }
       }, (err, data) => {
         if (err) {
+          if (typeof options.onError === 'function') {
+            return options.onError(err, reply);
+          }
+          if (typeof viewConfig.onError === 'function') {
+            return viewConfig.onError(err, reply);
+          }
+          if (typeof options.onError === 'string') {
+            return server.methods[options.onError](err, reply);
+          }
+          if (typeof viewConfig.onError === 'string') {
+            return server.methods[viewConfig.onError](err, reply);
+          }
+          // todo: handle per-view onError
           return reply(err);
         }
         const combinedData = merge(data.globals, data.locals);
