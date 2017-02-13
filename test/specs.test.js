@@ -86,7 +86,7 @@ lab.experiment('api', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
   });
-  server.connection();
+  server.connection({ port: 9991 });
   lab.before(start => {
     // start server
     server.register([
@@ -105,6 +105,24 @@ lab.experiment('api', () => {
               view: 'api',
               api: 'http://jsonplaceholder.typicode.com/posts?id={params.id}'
             },
+            '/apiHeader/': {
+              view: 'api',
+              api: {
+                url: 'http://localhost:9991/checkHeader',
+                headers: {
+                  'x-api-key': '1234'
+                }
+              }
+            },
+            '/apiHeader2/': {
+              view: 'api',
+              api: ['http://jsonplaceholder.typicode.com/posts?id={params.id}', {
+                url: 'http://localhost:9991/checkHeader',
+                headers: {
+                  'x-api-key': '1234'
+                }
+              }]
+            },
           }
         }
       }], error => {
@@ -117,24 +135,20 @@ lab.experiment('api', () => {
 
       server.route({
         method: 'GET',
+        path: '/checkHeader',
+        handler(request, reply) {
+          expect(request.headers['x-api-key']).to.equal('1234');
+          return reply({ test: true });
+        }
+      });
+
+      server.route({
+        method: 'GET',
         path: '/api',
         handler(request, reply) {
           reply({ test: true });
         }
       });
-
-      server.method('testerino', function(next) {
-        next(null, 'test');
-      });
-
-      server.method('testmethod2', function(next) {
-        next(null, 'test2');
-      });
-
-      server.method('myScope.myMethod', function(next) {
-        next(null, 'test3');
-      });
-
 
       server.start((err) => {
         Hoek.assert(!err, err);
@@ -142,7 +156,28 @@ lab.experiment('api', () => {
       });
     });
   });
+  lab.after(end => {
+    server.stop(end);
+  });
   // tests
+  lab.test('api with headers', done => {
+    server.inject({
+      method: 'GET',
+      url: '/apiHeader/'
+    }, response => {
+      const context = response.request.response.source.context;
+      expect(context.api.test).to.equal(true);
+      server.inject({
+        method: 'GET',
+        url: '/apiHeader2/'
+      }, response2 => {
+        const context2 = response.request.response.source.context;
+        expect(context2.api.test).to.equal(true);
+        done();
+      });
+    });
+  });
+
   lab.test('api', done => {
     server.inject({
       url: '/apitest'
@@ -151,11 +186,11 @@ lab.experiment('api', () => {
       expect(context).to.equal({ yaml: {},
         method: {},
         inject: {},
-        api: [ { userId: 1,
-             id: 1,
-             title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-             body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-         ]
+        api: [{ userId: 1,
+          id: 1,
+          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+        ]
       });
       done();
     });
@@ -169,11 +204,11 @@ lab.experiment('api', () => {
       expect(context).to.equal({ yaml: {},
         method: {},
         inject: {},
-        api: [ { userId: 1,
-             id: 1,
-             title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-             body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-         ]
+        api: [{ userId: 1,
+          id: 1,
+          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+        ]
       });
       done();
     });
@@ -274,11 +309,11 @@ lab.experiment('methods', () => {
       expect(context).to.equal({ yaml: {},
         method: {},
         inject: {},
-        api: [ { userId: 1,
-             id: 1,
-             title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-             body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-         ]
+        api: [{ userId: 1,
+          id: 1,
+          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+        ]
       });
       done();
     });
@@ -622,34 +657,30 @@ lab.experiment('errors', () => {
           }
         }
       }], (error) => {
-        Hoek.assert(!error, error);
-
-        server.views({
-          engines: { html: require('handlebars') },
-          path: `${__dirname}/views`
-        });
-
-        server.route({
-          method: 'GET',
-          path: '/api/500',
-          handler(request, reply) {
-            reply(new Error('testing'));
-          }
-        });
-
-        server.route({
-          method: 'GET',
-          path: '/api/404',
-          handler(request, reply) {
-            reply({ status: 'not found' }).code(404);
-          }
-        });
-
-        server.start((err) => {
-          Hoek.assert(!err, err);
-          start();
-        });
+      Hoek.assert(!error, error);
+      server.views({
+        engines: { html: require('handlebars') },
+        path: `${__dirname}/views`
       });
+      server.route({
+        method: 'GET',
+        path: '/api/500',
+        handler(request, reply) {
+          reply(new Error('testing'));
+        }
+      });
+      server.route({
+        method: 'GET',
+        path: '/api/404',
+        handler(request, reply) {
+          reply({ status: 'not found' }).code(404);
+        }
+      });
+      server.start((err) => {
+        Hoek.assert(!err, err);
+        start();
+      });
+    });
   });
 
   lab.test('500 errors bubble back up', (done) => {
@@ -666,6 +697,254 @@ lab.experiment('errors', () => {
       url: '/404'
     }, (response) => {
       expect(response.statusCode).to.equal(404);
+      done();
+    });
+  });
+});
+lab.experiment('onError', () => {
+  lab.test('top-level onError', (done) => {
+    const server = new Hapi.Server({
+      debug: { log: 'hapi-views' }
+    });
+    server.connection({ port: 9991 });
+    server.method('makeError', (next) => {
+      return next(new Error('this is an error'));
+    });
+    server.register([
+      require('vision'),
+      {
+        register: require('../'),
+        options: {
+          onError: (err, reply) => {
+            expect(err).to.not.equal(null);
+            return reply('the error was handled');
+          },
+          debug: true,
+          views: {
+            '/throwError': {
+              view: 'api',
+              method: 'makeError'
+            }
+          }
+        }
+      }], (error) => {
+      Hoek.assert(!error, error);
+      server.views({
+        engines: { html: require('handlebars') },
+        path: `${__dirname}/views`
+      });
+    });
+    server.start(() => {
+      server.inject({
+        url: '/throwError'
+      }, (response) => {
+        expect(response.statusCode).to.equal(200);
+        expect(response.result).to.equal('the error was handled');
+        done();
+      });
+    });
+  });
+  lab.test('top-level onError as server method', (done) => {
+    const server = new Hapi.Server({
+      debug: { log: 'hapi-views' }
+    });
+    server.connection({ port: 9991 });
+    server.method('makeError', (next) => {
+      return next(new Error('this is an error'));
+    });
+    server.method('fetchError', (err, reply) => {
+      expect(err).to.not.equal(null);
+      return reply('the error was handled');
+    });
+    server.register([
+      require('vision'),
+      {
+        register: require('../'),
+        options: {
+          onError: 'fetchError',
+          debug: true,
+          views: {
+            '/throwError': {
+              view: 'api',
+              method: 'makeError'
+            }
+          }
+        }
+      }], (error) => {
+      Hoek.assert(!error, error);
+      server.views({
+        engines: { html: require('handlebars') },
+        path: `${__dirname}/views`
+      });
+    });
+    server.start(() => {
+      server.inject({
+        url: '/throwError'
+      }, (response) => {
+        expect(response.statusCode).to.equal(200);
+        expect(response.result).to.equal('the error was handled');
+        done();
+      });
+    });
+  });
+  lab.test('per-route onError', (done) => {
+    const server = new Hapi.Server({
+      debug: { log: 'hapi-views' }
+    });
+    server.connection({ port: 9991 });
+    server.method('makeError', (next) => {
+      return next(new Error('this is an error'));
+    });
+    server.register([
+      require('vision'),
+      {
+        register: require('../'),
+        options: {
+          debug: true,
+          views: {
+            '/throwError': {
+              view: 'api',
+              method: 'makeError',
+              onError: (err, reply) => {
+                expect(err).to.not.equal(null);
+                return reply('the error was handled');
+              }
+            }
+          }
+        }
+      }], (error) => {
+      Hoek.assert(!error, error);
+      server.views({
+        engines: { html: require('handlebars') },
+        path: `${__dirname}/views`
+      });
+    });
+    server.start(() => {
+      server.inject({
+        url: '/throwError'
+      }, (response) => {
+        expect(response.statusCode).to.equal(200);
+        expect(response.result).to.equal('the error was handled');
+        done();
+      });
+    });
+  });
+  lab.test('per-route onError as server method', (done) => {
+    const server = new Hapi.Server({
+      debug: { log: 'hapi-views' }
+    });
+    server.connection({ port: 9991 });
+    server.method('makeError', (next) => {
+      return next(new Error('this is an error'));
+    });
+    server.method('fetchError', (err, reply) => {
+      expect(err).to.not.equal(null);
+      return reply('the error was handled');
+    });
+    server.register([
+      require('vision'),
+      {
+        register: require('../'),
+        options: {
+          debug: true,
+          views: {
+            '/throwError': {
+              view: 'api',
+              method: 'makeError',
+              onError: 'fetchError'
+            }
+          }
+        }
+      }], (error) => {
+      Hoek.assert(!error, error);
+      server.views({
+        engines: { html: require('handlebars') },
+        path: `${__dirname}/views`
+      });
+    });
+    server.start(() => {
+      server.inject({
+        url: '/throwError'
+      }, (response) => {
+        expect(response.statusCode).to.equal(200);
+        expect(response.result).to.equal('the error was handled');
+        done();
+      });
+    });
+  });
+});
+lab.experiment('globals', () => {
+  const server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' }
+  });
+  server.connection();
+  lab.before(start => {
+    // start server
+    server.register([
+      require('vision'),
+      {
+        register: require('../'),
+        options: {
+          dataPath: `${process.cwd()}/test/yaml`,
+          views: {
+            '/apitest': {
+              view: 'api',
+            },
+            '/apivar/{id}': {
+              view: 'api',
+              method: ['testerino'],
+              api: 'http://jsonplaceholder.typicode.com/posts?id=23',
+              yaml: 'test2.yaml'
+            },
+          },
+          globals: {
+            yaml: 'test1.yaml',
+            method: ['testmethod2'],
+            api: 'http://jsonplaceholder.typicode.com/posts?id=1'
+          }
+        }
+      }], error => {
+      Hoek.assert(!error, error);
+      server.method('testmethod2', function(next) {
+        next(null, 'test2');
+      });
+      server.method('testerino', function(next) {
+        next(null, 'test');
+      });
+      server.views({
+        engines: { html: require('handlebars') },
+        path: `${__dirname}/views`
+      });
+      server.route({
+        method: 'GET',
+        path: '/api',
+        handler(request, reply) {
+          reply({ test: true });
+        }
+      });
+      start();
+    });
+  });
+  lab.test('global api', done => {
+    server.inject({
+      url: '/apivar/1'
+    }, response => {
+      const context = response.request.response.source.context;
+      // combines if they are arrays:
+      expect(context.method).to.equal({
+        testmethod2: 'test2', testerino: 'test'
+      });
+      expect(context.api).to.equal([
+        { userId: 3,
+          id: 23,
+          title: 'maxime id vitae nihil numquam',
+          body: 'veritatis unde neque eligendi\nquae quod architecto quo neque vitae\nest illo sit tempora doloremque fugit quod\net et vel beatae sequi ullam sed tenetur perspiciatis'
+        }
+      ]);
+      expect(context.yaml).to.equal({
+        global: 'much global',
+        test1: 'true'
+      });
       done();
     });
   });

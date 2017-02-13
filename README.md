@@ -37,7 +37,14 @@ server.register({
           }
         }
       }
-    }
+    },
+    // each type defined under 'globals' is loaded for all views
+    globals: {
+      yaml: 'global.yaml',
+      api: 'http://globalBargle.com/icons/{params.id}',
+      method: 'globalMethod',
+      inject: '/globals'
+    },
   }
 }, function(err) {
 });
