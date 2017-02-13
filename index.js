@@ -3,6 +3,7 @@
 const async = require('async');
 const hoek = require('hoek');
 const merge = require('lodash.merge');
+const str2fn = require('str2fn');
 const defaults = {
   debug: false,
   views: {}
@@ -40,10 +41,10 @@ exports.register = function(server, options, next) {
             return viewConfig.onError(err, reply);
           }
           if (typeof options.onError === 'string') {
-            return server.methods[options.onError](err, reply);
+            return str2fn(server.methods, options.onError)(err, reply);
           }
           if (typeof viewConfig.onError === 'string') {
-            return server.methods[viewConfig.onError](err, reply);
+            return str2fn(server.methods, viewConfig.onError)(err, reply);
           }
           // todo: handle per-view onError
           return reply(err);
