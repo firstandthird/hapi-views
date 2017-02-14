@@ -408,7 +408,7 @@ lab.experiment('injects', () => {
       {
         register: require('../'),
         options: {
-          debug: true,
+          // debug: true,
           dataPath: `${process.cwd()}/test/yaml`,
           views: {
             '/apivar/{id}': {
@@ -792,7 +792,7 @@ lab.experiment('onError', () => {
       {
         register: require('../'),
         options: {
-          debug: true,
+          // debug: true,
           views: {
             '/throwError': {
               view: 'api',
@@ -891,7 +891,7 @@ lab.experiment('globals', () => {
           globals: {
             yaml: 'test1.yaml',
             method: ['testmethod2'],
-            api: { var1: 'http://jsonplaceholder.typicode.com/posts?id=1' }
+            api: 'http://jsonplaceholder.typicode.com/posts?id=1'
           }
         }
       }], error => {
