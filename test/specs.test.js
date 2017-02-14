@@ -303,23 +303,23 @@ lab.experiment('methods', () => {
     });
   });
   // tests
-  // lab.test('api', done => {
-  //   server.inject({
-  //     url: '/apitest'
-  //   }, response => {
-  //     const context = response.request.response.source.context;
-  //     expect(context).to.equal({ yaml: {},
-  //       method: {},
-  //       inject: {},
-  //       api: [{ userId: 1,
-  //         id: 1,
-  //         title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-  //         body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-  //       ]
-  //     });
-  //     done();
-  //   });
-  // });
+  lab.test('api', done => {
+    server.inject({
+      url: '/apitest'
+    }, response => {
+      const context = response.request.response.source.context;
+      expect(context).to.equal({ yaml: {},
+        method: {},
+        inject: {},
+        api: [{ userId: 1,
+          id: 1,
+          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+        ]
+      });
+      done();
+    });
+  });
 
   lab.test('method', done => {
     server.inject({
