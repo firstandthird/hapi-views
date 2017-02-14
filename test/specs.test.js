@@ -103,25 +103,30 @@ lab.experiment('api', () => {
             },
             '/apivar/{id}': {
               view: 'api',
-              api: 'http://jsonplaceholder.typicode.com/posts?id={params.id}'
+              api: { value: 'http://jsonplaceholder.typicode.com/posts?id={params.id}' }
             },
             '/apiHeader/': {
               view: 'api',
               api: {
-                url: 'http://localhost:9991/checkHeader',
-                headers: {
-                  'x-api-key': '1234'
+                value: {
+                  url: 'http://localhost:9991/checkHeader',
+                  headers: {
+                    'x-api-key': '1234'
+                  }
                 }
               }
             },
             '/apiHeader2/': {
               view: 'api',
-              api: ['http://jsonplaceholder.typicode.com/posts?id={params.id}', {
-                url: 'http://localhost:9991/checkHeader',
-                headers: {
-                  'x-api-key': '1234'
+              api: {
+                value1: 'http://jsonplaceholder.typicode.com/posts?id=2',
+                value2: {
+                  url: 'http://localhost:9991/checkHeader',
+                  headers: {
+                    'x-api-key': '1234'
+                  }
                 }
-              }]
+              }
             },
           }
         }
@@ -166,18 +171,18 @@ lab.experiment('api', () => {
       url: '/apiHeader/'
     }, response => {
       const context = response.request.response.source.context;
-      expect(context.api.test).to.equal(true);
+      expect(context.api.value.test).to.equal(true);
       server.inject({
         method: 'GET',
         url: '/apiHeader2/'
       }, response2 => {
-        const context2 = response.request.response.source.context;
-        expect(context2.api.test).to.equal(true);
+        const context2 = response2.request.response.source.context;
+        expect(context2.api.value1[0].id).to.equal(2);
+        expect(context2.api.value2.test).to.equal(true);
         done();
       });
     });
   });
-
   lab.test('api', done => {
     server.inject({
       url: '/apitest'
@@ -186,16 +191,17 @@ lab.experiment('api', () => {
       expect(context).to.equal({ yaml: {},
         method: {},
         inject: {},
-        api: [{ userId: 1,
-          id: 1,
-          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-        ]
+        api: {
+          _: [{ userId: 1,
+            id: 1,
+            title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+            body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+          ]
+        }
       });
       done();
     });
   });
-
   lab.test('api with variables', done => {
     server.inject({
       url: '/apivar/1'
@@ -204,11 +210,13 @@ lab.experiment('api', () => {
       expect(context).to.equal({ yaml: {},
         method: {},
         inject: {},
-        api: [{ userId: 1,
-          id: 1,
-          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-        ]
+        api: {
+          value: [{ userId: 1,
+            id: 1,
+            title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+            body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+          ]
+        }
       });
       done();
     });
@@ -309,11 +317,11 @@ lab.experiment('methods', () => {
       expect(context).to.equal({ yaml: {},
         method: {},
         inject: {},
-        api: [{ userId: 1,
+        api: { _: [{ userId: 1,
           id: 1,
           title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
           body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-        ]
+        ] }
       });
       done();
     });
@@ -406,7 +414,7 @@ lab.experiment('injects', () => {
       {
         register: require('../'),
         options: {
-          //debug: true,
+          debug: true,
           dataPath: `${process.cwd()}/test/yaml`,
           views: {
             '/apivar/{id}': {
@@ -453,8 +461,6 @@ lab.experiment('injects', () => {
       server.method('myScope.myMethod', function(next) {
         next(null, 'test3');
       });
-
-
       server.start((err) => {
         Hoek.assert(!err, err);
         start();
@@ -476,7 +482,6 @@ lab.experiment('injects', () => {
       done();
     });
   });
-
   lab.test('injectmap', done => {
     server.inject({
       url: '/injectmap'
@@ -494,7 +499,7 @@ lab.experiment('injects', () => {
       done();
     });
   });
-
+  //
   lab.test('?json=1', done => {
     server.inject({
       url: '/injectmap?json=1'
@@ -514,7 +519,6 @@ lab.experiment('injects', () => {
     });
   });
 });
-
 lab.experiment('methods with args', () => {
   let server;
 
@@ -873,6 +877,7 @@ lab.experiment('onError', () => {
     });
   });
 });
+
 lab.experiment('globals', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
@@ -900,7 +905,7 @@ lab.experiment('globals', () => {
           globals: {
             yaml: 'test1.yaml',
             method: ['testmethod2'],
-            api: 'http://jsonplaceholder.typicode.com/posts?id=1'
+            api: { var1: 'http://jsonplaceholder.typicode.com/posts?id=1' }
           }
         }
       }], error => {
@@ -934,7 +939,14 @@ lab.experiment('globals', () => {
       expect(context.method).to.equal({
         testmethod2: 'test2', testerino: 'test'
       });
-      expect(context.api).to.equal([
+      expect(context.api.var1).to.equal([
+        { userId: 1,
+          id: 1,
+          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto'
+        }
+      ]);
+      expect(context.api._).to.equal([
         { userId: 3,
           id: 23,
           title: 'maxime id vitae nihil numquam',
