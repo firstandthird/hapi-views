@@ -7,7 +7,7 @@ const Hoek = require('hoek');
 const expect = require('code').expect;
 const Hapi = require('hapi');
 const EOL = require('os').EOL;
-/*
+
 lab.experiment('yaml', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
@@ -216,7 +216,7 @@ lab.experiment('api', () => {
     });
   });
 });
-*/
+
 lab.experiment('methods', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
