@@ -81,7 +81,6 @@ lab.experiment('yaml', () => {
     });
   });
 });
-
 lab.experiment('api', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
@@ -116,12 +115,15 @@ lab.experiment('api', () => {
             },
             '/apiHeader2/': {
               view: 'api',
-              api: ['http://jsonplaceholder.typicode.com/posts?id={params.id}', {
-                url: 'http://localhost:9991/checkHeader',
-                headers: {
-                  'x-api-key': '1234'
+              api: {
+                value1: 'http://jsonplaceholder.typicode.com/posts?id=2',
+                value2: {
+                  url: 'http://localhost:9991/checkHeader',
+                  headers: {
+                    'x-api-key': '1234'
+                  }
                 }
-              }]
+              }
             },
           }
         }
@@ -160,6 +162,7 @@ lab.experiment('api', () => {
     server.stop(end);
   });
   // tests
+
   lab.test('api with headers', done => {
     server.inject({
       method: 'GET',
@@ -171,13 +174,13 @@ lab.experiment('api', () => {
         method: 'GET',
         url: '/apiHeader2/'
       }, response2 => {
-        const context2 = response.request.response.source.context;
-        expect(context2.api.test).to.equal(true);
+        const context2 = response2.request.response.source.context;
+        expect(context2.api.value1[0].id).to.equal(2);
+        expect(context2.api.value2.test).to.equal(true);
         done();
       });
     });
   });
-
   lab.test('api', done => {
     server.inject({
       url: '/apitest'
@@ -195,7 +198,6 @@ lab.experiment('api', () => {
       done();
     });
   });
-
   lab.test('api with variables', done => {
     server.inject({
       url: '/apivar/1'
@@ -406,7 +408,7 @@ lab.experiment('injects', () => {
       {
         register: require('../'),
         options: {
-          //debug: true,
+          // debug: true,
           dataPath: `${process.cwd()}/test/yaml`,
           views: {
             '/apivar/{id}': {
@@ -453,8 +455,6 @@ lab.experiment('injects', () => {
       server.method('myScope.myMethod', function(next) {
         next(null, 'test3');
       });
-
-
       server.start((err) => {
         Hoek.assert(!err, err);
         start();
@@ -476,7 +476,6 @@ lab.experiment('injects', () => {
       done();
     });
   });
-
   lab.test('injectmap', done => {
     server.inject({
       url: '/injectmap'
@@ -494,7 +493,7 @@ lab.experiment('injects', () => {
       done();
     });
   });
-
+  //
   lab.test('?json=1', done => {
     server.inject({
       url: '/injectmap?json=1'
@@ -514,7 +513,6 @@ lab.experiment('injects', () => {
     });
   });
 });
-
 lab.experiment('methods with args', () => {
   let server;
 
@@ -707,9 +705,7 @@ lab.experiment('onError', () => {
       debug: { log: 'hapi-views' }
     });
     server.connection({ port: 9991 });
-    server.method('makeError', (next) => {
-      return next(new Error('this is an error'));
-    });
+    server.method('makeError', (next) => next(new Error('this is an error')));
     server.register([
       require('vision'),
       {
@@ -749,9 +745,7 @@ lab.experiment('onError', () => {
       debug: { log: 'hapi-views' }
     });
     server.connection({ port: 9991 });
-    server.method('makeError', (next) => {
-      return next(new Error('this is an error'));
-    });
+    server.method('makeError', (next) => next(new Error('this is an error')));
     server.method('fetchError', (err, reply) => {
       expect(err).to.not.equal(null);
       return reply('the error was handled');
@@ -792,15 +786,13 @@ lab.experiment('onError', () => {
       debug: { log: 'hapi-views' }
     });
     server.connection({ port: 9991 });
-    server.method('makeError', (next) => {
-      return next(new Error('this is an error'));
-    });
+    server.method('makeError', (next) => next(new Error('this is an error')));
     server.register([
       require('vision'),
       {
         register: require('../'),
         options: {
-          debug: true,
+          // debug: true,
           views: {
             '/throwError': {
               view: 'api',
@@ -834,9 +826,7 @@ lab.experiment('onError', () => {
       debug: { log: 'hapi-views' }
     });
     server.connection({ port: 9991 });
-    server.method('makeError', (next) => {
-      return next(new Error('this is an error'));
-    });
+    server.method('makeError', (next) => next(new Error('this is an error')));
     server.method('fetchError', (err, reply) => {
       expect(err).to.not.equal(null);
       return reply('the error was handled');
@@ -873,6 +863,7 @@ lab.experiment('onError', () => {
     });
   });
 });
+
 lab.experiment('globals', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
