@@ -98,18 +98,20 @@ lab.experiment('api', () => {
           views: {
             '/apitest': {
               view: 'api',
-              api: 'http://jsonplaceholder.typicode.com/posts?id=1'
+              api: { key1: 'http://jsonplaceholder.typicode.com/posts?id=1' }
             },
             '/apivar/{id}': {
               view: 'api',
-              api: 'http://jsonplaceholder.typicode.com/posts?id={params.id}'
+              api: { var1: 'http://jsonplaceholder.typicode.com/posts?id={params.id}' }
             },
             '/apiHeader/': {
               view: 'api',
               api: {
-                url: 'http://localhost:9991/checkHeader',
-                headers: {
-                  'x-api-key': '1234'
+                var1: {
+                  url: 'http://localhost:9991/checkHeader',
+                  headers: {
+                    'x-api-key': '1234'
+                  }
                 }
               }
             },
@@ -162,14 +164,13 @@ lab.experiment('api', () => {
     server.stop(end);
   });
   // tests
-
   lab.test('api with headers', done => {
     server.inject({
       method: 'GET',
       url: '/apiHeader/'
     }, response => {
       const context = response.request.response.source.context;
-      expect(context.api.test).to.equal(true);
+      expect(context.api.var1.test).to.equal(true);
       server.inject({
         method: 'GET',
         url: '/apiHeader2/'
@@ -189,11 +190,13 @@ lab.experiment('api', () => {
       expect(context).to.equal({ yaml: {},
         method: {},
         inject: {},
-        api: [{ userId: 1,
-          id: 1,
-          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-        ]
+        api: {
+          key1: [{ userId: 1,
+            id: 1,
+            title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+            body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+          ]
+        }
       });
       done();
     });
@@ -206,11 +209,13 @@ lab.experiment('api', () => {
       expect(context).to.equal({ yaml: {},
         method: {},
         inject: {},
-        api: [{ userId: 1,
-          id: 1,
-          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-        ]
+        api: {
+          var1: [{ userId: 1,
+            id: 1,
+            title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+            body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+          ]
+        }
       });
       done();
     });
@@ -234,7 +239,7 @@ lab.experiment('methods', () => {
           views: {
             '/apitest': {
               view: 'api',
-              api: 'http://jsonplaceholder.typicode.com/posts?id=1'
+              api: { var1: 'http://jsonplaceholder.typicode.com/posts?id=1' }
             },
             '/methodtest': {
               view: 'method',
@@ -311,11 +316,11 @@ lab.experiment('methods', () => {
       expect(context).to.equal({ yaml: {},
         method: {},
         inject: {},
-        api: [{ userId: 1,
+        api: { var1: [{ userId: 1,
           id: 1,
           title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
           body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-        ]
+        ] }
       });
       done();
     });
@@ -413,7 +418,7 @@ lab.experiment('injects', () => {
           views: {
             '/apivar/{id}': {
               view: 'api',
-              api: 'http://jsonplaceholder.typicode.com/posts?id={params.id}'
+              api: { var1: 'http://jsonplaceholder.typicode.com/posts?id={params.id}' }
             },
             '/inject': {
               inject: '/api',
@@ -493,7 +498,6 @@ lab.experiment('injects', () => {
       done();
     });
   });
-  //
   lab.test('?json=1', done => {
     server.inject({
       url: '/injectmap?json=1'
@@ -513,6 +517,7 @@ lab.experiment('injects', () => {
     });
   });
 });
+
 lab.experiment('methods with args', () => {
   let server;
 
@@ -628,7 +633,6 @@ lab.experiment('methods with args', () => {
     });
   });
 });
-
 lab.experiment('errors', () => {
   const server = new Hapi.Server({
     debug: { log: 'hapi-views' }
@@ -646,11 +650,11 @@ lab.experiment('errors', () => {
           views: {
             '/500': {
               view: 'api',
-              api: 'http://localhost:9991/api/500'
+              api: { var1: 'http://localhost:9991/api/500' }
             },
             '/404': {
               view: 'api',
-              api: 'http://localhost:9991/api/404'
+              api: { var1: 'http://localhost:9991/api/404' }
             }
           }
         }
@@ -884,14 +888,14 @@ lab.experiment('globals', () => {
             '/apivar/{id}': {
               view: 'api',
               method: ['testerino'],
-              api: 'http://jsonplaceholder.typicode.com/posts?id=23',
+              api: { var1: 'http://jsonplaceholder.typicode.com/posts?id=23' },
               yaml: 'test2.yaml'
             },
           },
           globals: {
             yaml: 'test1.yaml',
             method: ['testmethod2'],
-            api: 'http://jsonplaceholder.typicode.com/posts?id=1'
+            api: { var1: 'http://jsonplaceholder.typicode.com/posts?id=1' }
           }
         }
       }], error => {
@@ -925,13 +929,13 @@ lab.experiment('globals', () => {
       expect(context.method).to.equal({
         testmethod2: 'test2', testerino: 'test'
       });
-      expect(context.api).to.equal([
+      expect(context.api).to.equal({ var1: [
         { userId: 3,
           id: 23,
           title: 'maxime id vitae nihil numquam',
           body: 'veritatis unde neque eligendi\nquae quod architecto quo neque vitae\nest illo sit tempora doloremque fugit quod\net et vel beatae sequi ullam sed tenetur perspiciatis'
         }
-      ]);
+      ] });
       expect(context.yaml).to.equal({
         global: 'much global',
         test1: 'true'
