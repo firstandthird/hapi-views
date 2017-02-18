@@ -66,6 +66,11 @@ exports.register = function(server, options, next) {
 
   //routes
   async.forEachOfSeries(options.views, (config, path, cb) => {
+    // verify all top-level "api" specs are objects
+    if (config.api && typeof config.api !== 'object') {
+      throw new Error(`route ${path} api is "${config.api}" of type ${typeof config.api}. api must be specified as an object in new versions of hapi-views`);
+    }
+
     server.route({
       path,
       method: 'get',
