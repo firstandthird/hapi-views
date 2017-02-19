@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/firstandthird/hapi-views#readme",
   "dependencies": {
-    "async": "2.1.4",
+    "async": "2.1.5",
     "boom": "4.2.0",
     "hoek": "4.1.0",
     "js-yaml": "3.8.1",
