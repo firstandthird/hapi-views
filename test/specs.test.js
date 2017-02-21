@@ -25,7 +25,7 @@ lab.experiment('yaml', () => {
           views: {
             '/yaml': {
               view: 'yaml',
-              yaml: 'test1.yaml'
+              yaml: { yaml1: 'test1.yaml' }
             },
           }
         }
@@ -74,13 +74,14 @@ lab.experiment('yaml', () => {
         method: {},
         inject: {},
         yaml: {
-          test1: 'true'
+          yaml1: { test1: 'true' }
         }
       });
       done();
     });
   });
 });
+
 lab.experiment('api', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
@@ -243,31 +244,35 @@ lab.experiment('methods', () => {
             },
             '/methodtest': {
               view: 'method',
-              method: 'testerino'
+              method: { var1: 'testerino' }
             },
             '/methodmulti': {
               view: 'method',
-              method: ['testerino', 'testmethod2', 'myScope.myMethod']
+              method: {
+                var1: 'testerino',
+                var2: 'testmethod2',
+                var3: 'myScope.myMethod'
+              }
             },
             '/data': {
               view: 'data',
-              yaml: 'test1.yaml',
+              yaml: { yaml1: 'test1.yaml' },
               data: {
                 name: 'Jack',
                 url: '{request.url.path}',
                 test: {
-                  ok: '{yaml.test1}'
+                  ok: '{yaml.yaml1.test1}'
                 }
               }
             },
             '/data-string': {
               view: 'data',
-              yaml: 'test1.yaml',
+              yaml: { yaml1: 'test1.yaml' },
               data: 'yaml'
             },
             '/data-method': {
               view: 'data',
-              yaml: 'test1.yaml',
+              yaml: { yaml1: 'test1.yaml' },
               dataMethod: 'handle.data'
             }
           }
@@ -331,7 +336,7 @@ lab.experiment('methods', () => {
       url: '/methodtest'
     }, response => {
       const context = response.request.response.source.context;
-      expect(context).to.equal({ yaml: {}, api: {}, method: 'test', inject: {} });
+      expect(context).to.equal({ yaml: {}, api: {}, method: { var1: 'test' }, inject: {} });
       done();
     });
   });
@@ -354,9 +359,9 @@ lab.experiment('methods', () => {
         yaml: {},
         api: {},
         method: {
-          testerino: 'test',
-          testmethod2: 'test2',
-          'myScope.myMethod': 'test3'
+          var1: 'test',
+          var2: 'test2',
+          var3: 'test3'
         },
         inject: {}
       });
@@ -379,7 +384,9 @@ lab.experiment('methods', () => {
     }, response => {
       const context = response.request.response.source.context;
       expect(context).to.equal({
-        test1: 'true'
+        yaml1: {
+          test1: 'true'
+        }
       });
       done();
     });
@@ -394,7 +401,9 @@ lab.experiment('methods', () => {
     }, response => {
       const context = response.request.response.source.context;
       expect(context).to.equal({
-        test1: 'true'
+        yaml1: {
+          test1: 'true'
+        }
       });
       done();
     });
@@ -421,7 +430,7 @@ lab.experiment('injects', () => {
               api: { var1: 'http://jsonplaceholder.typicode.com/posts?id={params.id}' }
             },
             '/inject': {
-              inject: '/api',
+              inject: { api: '/api' },
               view: 'data'
             },
             '/injectmap': {
@@ -476,7 +485,7 @@ lab.experiment('injects', () => {
         yaml: {},
         api: {},
         method: {},
-        inject: { test: true }
+        inject: { api: { test: true } }
       });
       done();
     });
@@ -538,20 +547,25 @@ lab.experiment('methods with args', () => {
             '/methodWithArgs/{name}': {
               view: 'method',
               method: {
-                name: 'myScope.myMethod',
-                args: [true, '{request.params.name}', '{request.query.score}']
+                method1: {
+                  name: 'myScope.myMethod',
+                  args: [true, '{request.params.name}', '{request.query.score}']
+                }
               }
               // three args, one static and two derived from the request:
             },
             '/multiMethods/{name}/{harbinger}': {
               view: 'methodWithArgs',
-              method: [{
-                name: 'someMethod',
-                args: ['{request.params.name}']
-              }, {
-                name: 'someOtherMethod',
-                args: ['{request.params.harbinger}', '{request.query.score}']
-              }]
+              method: {
+                method1: {
+                  name: 'someMethod',
+                  args: ['{request.params.name}']
+                },
+                method2: {
+                  name: 'someOtherMethod',
+                  args: ['{request.params.harbinger}', '{request.query.score}']
+                }
+              }
             },
             '/multiMethodsObj/{name}/{harbinger}': {
               view: 'method',
@@ -887,14 +901,14 @@ lab.experiment('globals', () => {
             },
             '/apivar/{id}': {
               view: 'api',
-              method: ['testerino'],
+              method: { method2: 'testerino' },
               api: { var1: 'http://jsonplaceholder.typicode.com/posts?id=23' },
-              yaml: 'test2.yaml'
+              yaml: { yaml1: 'test2.yaml' }
             },
           },
           globals: {
-            yaml: 'test1.yaml',
-            method: ['testmethod2'],
+            yaml: { yaml1: 'test1.yaml' },
+            method: { method1: 'testmethod2' },
             api: { var1: 'http://jsonplaceholder.typicode.com/posts?id=1' }
           }
         }
@@ -914,7 +928,7 @@ lab.experiment('globals', () => {
         method: 'GET',
         path: '/api',
         handler(request, reply) {
-          reply({ test: true });
+          reply({ yaml1: { test: true } });
         }
       });
       start();
@@ -927,7 +941,7 @@ lab.experiment('globals', () => {
       const context = response.request.response.source.context;
       // combines if they are arrays:
       expect(context.method).to.equal({
-        testmethod2: 'test2', testerino: 'test'
+        method1: 'test2', method2: 'test'
       });
       expect(context.api).to.equal({ var1: [
         { userId: 3,
@@ -937,8 +951,10 @@ lab.experiment('globals', () => {
         }
       ] });
       expect(context.yaml).to.equal({
-        global: 'much global',
-        test1: 'true'
+        yaml1: {
+          global: 'much global',
+          test1: 'true'
+        }
       });
       done();
     });
