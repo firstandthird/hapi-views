@@ -30,7 +30,7 @@
     "js-yaml": "3.8.1",
     "lodash.merge": "^4.6.0",
     "str2fn": "^1.0.0",
-    "varson": "0.5.3",
+    "varson": "1.0.1",
     "wreck": "10.0.0"
   },
   "devDependencies": {
