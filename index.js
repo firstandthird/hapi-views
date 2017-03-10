@@ -5,6 +5,7 @@ const hoek = require('hoek');
 const merge = require('lodash.merge');
 const str2fn = require('str2fn');
 const defaults = {
+  routeConfig: {},
   debug: false,
   views: {}
 };
@@ -70,7 +71,7 @@ exports.register = function(server, options, next) {
       path,
       method: 'get',
       handler: renderHandler(config),
-      config: config.routeConfig || {}
+      config: merge(options.routeConfig, config.routeConfig || {})
     });
 
     cb();
