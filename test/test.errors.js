@@ -6,6 +6,7 @@ const lab = exports.lab = Lab.script();
 const Hoek = require('hoek');
 const expect = require('code').expect;
 const Hapi = require('hapi');
+const Boom = require('boom');
 
 lab.experiment('errors', () => {
   const server = new Hapi.Server({
@@ -29,6 +30,10 @@ lab.experiment('errors', () => {
             '/404': {
               view: 'api',
               api: { var1: 'http://localhost:9991/api/404' }
+            },
+            '/401': {
+              view: 'api',
+              api: { var1: 'http://localhost:9991/api/401' }
             }
           }
         }
@@ -52,6 +57,13 @@ lab.experiment('errors', () => {
           reply({ status: 'not found' }).code(404);
         }
       });
+      server.route({
+        method: 'GET',
+        path: '/api/401',
+        handler(request, reply) {
+          reply(Boom.unauthorized('nope bud'));
+        }
+      });
       server.start((err) => {
         Hoek.assert(!err, err);
         start();
@@ -73,6 +85,15 @@ lab.experiment('errors', () => {
       url: '/404'
     }, (response) => {
       expect(response.statusCode).to.equal(404);
+      done();
+    });
+  });
+
+  lab.test('boom unauthorized errors bubble back up', (done) => {
+    server.inject({
+      url: '/401'
+    }, (response) => {
+      expect(response.statusCode).to.equal(401);
       done();
     });
   });

@@ -4,6 +4,7 @@ const async = require('async');
 const hoek = require('hoek');
 const merge = require('lodash.merge');
 const str2fn = require('str2fn');
+const Boom = require('boom');
 const defaults = {
   routeConfig: {},
   debug: false,
@@ -48,7 +49,7 @@ exports.register = function(server, options, next) {
             return str2fn(server.methods, viewConfig.onError)(err, reply);
           }
           // todo: handle per-view onError
-          return reply(err);
+          return reply(Boom.wrap(err));
         }
         const combinedData = merge(data.globals, data.locals);
         if (options.debug) {
