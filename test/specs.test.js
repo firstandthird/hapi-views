@@ -737,7 +737,9 @@ lab.experiment('onError', () => {
           views: {
             '/throwError': {
               view: 'api',
-              method: 'makeError'
+              method: {
+                error: 'makeError'
+              }
             }
           }
         }
@@ -778,7 +780,9 @@ lab.experiment('onError', () => {
           views: {
             '/throwError': {
               view: 'api',
-              method: 'makeError'
+              method: {
+                makeError: 'makeError'
+              }
             }
           }
         }
@@ -814,7 +818,9 @@ lab.experiment('onError', () => {
           views: {
             '/throwError': {
               view: 'api',
-              method: 'makeError',
+              method:  {
+                error: 'makeError',
+              },
               onError: (err, reply) => {
                 expect(err).to.not.equal(null);
                 return reply('the error was handled');
@@ -858,7 +864,9 @@ lab.experiment('onError', () => {
           views: {
             '/throwError': {
               view: 'api',
-              method: 'makeError',
+              method: {
+                error: 'makeError',
+              },
               onError: 'fetchError'
             }
           }
