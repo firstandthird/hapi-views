@@ -2,9 +2,9 @@
 /* eslint new-cap: 0 */
 const async = require('async');
 const hoek = require('hoek');
-const merge = require('lodash.merge');
 const str2fn = require('str2fn');
 const Boom = require('boom');
+const aug = require('aug');
 const defaults = {
   routeConfig: {},
   debug: false,
@@ -51,7 +51,7 @@ exports.register = function(server, options, next) {
           // todo: handle per-view onError
           return reply(Boom.wrap(err));
         }
-        const combinedData = merge(data.globals, data.locals);
+        const combinedData = aug('deep', data.globals, data.locals);
         if (options.debug) {
           server.log(['hapi-views', 'debug'], {
             data: combinedData,
@@ -72,7 +72,7 @@ exports.register = function(server, options, next) {
       path,
       method: 'get',
       handler: renderHandler(config),
-      config: merge(options.routeConfig, config.routeConfig || {})
+      config: aug('deep', options.routeConfig, config.routeConfig || {})
     });
 
     cb();
