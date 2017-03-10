@@ -51,7 +51,7 @@ exports.register = function(server, options, next) {
           // todo: handle per-view onError
           return reply(Boom.wrap(err));
         }
-        const combinedData = aug('deep', data.globals, data.locals);
+        const combinedData = aug('deep', {}, data.globals, data.locals);
         if (options.debug) {
           server.log(['hapi-views', 'debug'], {
             data: combinedData,
@@ -72,7 +72,7 @@ exports.register = function(server, options, next) {
       path,
       method: 'get',
       handler: renderHandler(config),
-      config: aug('deep', options.routeConfig, config.routeConfig || {})
+      config: aug('deep', {}, options.routeConfig, config.routeConfig || {})
     });
 
     cb();
