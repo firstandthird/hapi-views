@@ -1,5 +1,5 @@
 'use strict';
-/* eslint new-cap: 0 */
+/* eslint new-cap: 0 no-underscore-dangle: 0 */
 const async = require('async');
 const hoek = require('hoek');
 const str2fn = require('str2fn');
@@ -61,6 +61,21 @@ exports.register = function(server, options, next) {
         if (request.query.json === '1') {
           return reply(combinedData).type('application/json');
         }
+
+        let redirect = false;
+
+        if (combinedData.method) {
+          Object.keys(combinedData.method).forEach(key => {
+            if (typeof combinedData.method[key]._redirect === 'string') {
+              redirect = combinedData.method[key]._redirect;
+            }
+          });
+        }
+
+        if (redirect) {
+          return reply.redirect(redirect);
+        }
+
         return reply.view(viewConfig.view, combinedData);
       });
     };
