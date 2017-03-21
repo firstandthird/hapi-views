@@ -27,6 +27,13 @@ exports.register = function(server, options, next) {
   const renderHandler = function(viewConfig) {
     return function(request, reply) {
       async.autoInject({
+        preProcess: done => {
+          if (typeof options.preProcess === 'string') {
+            return str2fn(server.methods, options.preProcess)(request, options, done);
+          }
+
+          return done();
+        },
         locals: done => FetchData.fetch(request, viewConfig, options, done),
         globals: done => {
           if (!options.globals) {
@@ -61,6 +68,13 @@ exports.register = function(server, options, next) {
         if (request.query.json === '1') {
           return reply(combinedData).type('application/json');
         }
+
+        if (typeof options.preResponse === 'string') {
+          return str2fn(server.methods, options.preResponse)(request, options, combinedData, reply, () => {
+            reply.view(viewConfig.view, combinedData);
+          });
+        }
+
         return reply.view(viewConfig.view, combinedData);
       });
     };
