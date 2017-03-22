@@ -27,8 +27,23 @@ exports.register = function(server, options, next) {
   const renderHandler = function(viewConfig) {
     return function(request, reply) {
       async.autoInject({
-        locals: done => FetchData.fetch(request, viewConfig, options, done),
-        globals: done => {
+        preProcess: done => {
+          if (options.preProcess) {
+            return str2fn(server.methods, options.preProcess)(request, options, reply, done);
+          }
+
+          return done();
+        },
+        locals: (preProcess, done) => {
+          if (preProcess) {
+            return done(null, false);
+          }
+          return FetchData.fetch(request, viewConfig, options, done);
+        },
+        globals: (preProcess, done) => {
+          if (preProcess) {
+            return done(null, false);
+          }
           if (!options.globals) {
             return done(null, {});
           }
@@ -51,6 +66,12 @@ exports.register = function(server, options, next) {
           // todo: handle per-view onError
           return reply(Boom.wrap(err));
         }
+
+        // Returned early in preProcess
+        if (!data.globals && !data.locals) {
+          return;
+        }
+
         const combinedData = aug('deep', {}, data.globals, data.locals);
         if (options.debug) {
           server.log(['hapi-views', 'debug'], {
@@ -61,6 +82,13 @@ exports.register = function(server, options, next) {
         if (request.query.json === '1') {
           return reply(combinedData).type('application/json');
         }
+
+        if (options.preResponse) {
+          return str2fn(server.methods, options.preResponse)(request, options, combinedData, reply, () => {
+            reply.view(viewConfig.view, combinedData);
+          });
+        }
+
         return reply.view(viewConfig.view, combinedData);
       });
     };
