@@ -28,8 +28,8 @@ exports.register = function(server, options, next) {
     return function(request, reply) {
       async.autoInject({
         preProcess: done => {
-          if (options.preProcess) {
-            return str2fn(server.methods, options.preProcess)(request, options, reply, done);
+          if (viewConfig.preProcess) {
+            return str2fn(server.methods, viewConfig.preProcess)(request, options, reply, done);
           }
 
           return done();
@@ -83,8 +83,8 @@ exports.register = function(server, options, next) {
           return reply(combinedData).type('application/json');
         }
 
-        if (options.preResponse) {
-          return str2fn(server.methods, options.preResponse)(request, options, combinedData, reply, () => {
+        if (viewConfig.preResponse) {
+          return str2fn(server.methods, viewConfig.preResponse)(request, options, combinedData, reply, () => {
             reply.view(viewConfig.view, combinedData);
           });
         }

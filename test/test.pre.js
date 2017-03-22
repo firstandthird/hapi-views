@@ -26,10 +26,10 @@ lab.experiment('pre', () => {
       {
         register: require('../'),
         options: {
-          preProcess: 'process',
           views: {
             '/process': {
               view: 'api',
+              preProcess: 'process',
               method: {
                 dummy: 'dummy'
               }
@@ -70,10 +70,10 @@ lab.experiment('pre', () => {
       {
         register: require('../'),
         options: {
-          preProcess: 'process',
           views: {
             '/process': {
               view: 'api',
+              preProcess: 'process',
               method: {
                 dummy: 'dummy'
               }
@@ -113,10 +113,10 @@ lab.experiment('pre', () => {
       {
         register: require('../'),
         options: {
-          preResponse: 'response',
           views: {
             '/response': {
               view: 'api',
+              preResponse: 'response',
               method: {
                 dummy: 'dummy'
               }
