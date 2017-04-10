@@ -2,9 +2,9 @@
 /* eslint new-cap: 0 */
 const async = require('async');
 const hoek = require('hoek');
-const str2fn = require('str2fn');
-const Boom = require('boom');
 const aug = require('aug');
+const renderHandler = require('./lib/handler.js');
+const serverMethods = ['api', 'inject', 'yaml', 'method', 'fetch'];
 const defaults = {
   routeConfig: {},
   debug: false,
@@ -13,89 +13,19 @@ const defaults = {
 
 exports.register = function(server, options, next) {
   options = hoek.applyToDefaults(defaults, options);
-
-  const Fetch = require('./lib/fetch-data');
-  const FetchData = new Fetch(server);
-
   if (options.cache) {
     server.log(
       ['error', 'hapi-views'],
       'Cache option is deprecated, use options.routeConfig.cache instead'
     );
   }
-
-  const renderHandler = function(viewConfig) {
-    return function(request, reply) {
-      async.autoInject({
-        preProcess: done => {
-          if (viewConfig.preProcess) {
-            return str2fn(server.methods, viewConfig.preProcess)(request, options, reply, done);
-          }
-
-          return done();
-        },
-        locals: (preProcess, done) => {
-          if (preProcess) {
-            return done(null, false);
-          }
-          return FetchData.fetch(request, viewConfig, options, done);
-        },
-        globals: (preProcess, done) => {
-          if (preProcess) {
-            return done(null, false);
-          }
-          if (!options.globals) {
-            return done(null, {});
-          }
-          FetchData.fetch(request, options.globals, options, done);
-        }
-      }, (err, data) => {
-        if (err) {
-          if (typeof options.onError === 'function') {
-            return options.onError(err, reply);
-          }
-          if (typeof viewConfig.onError === 'function') {
-            return viewConfig.onError(err, reply);
-          }
-          if (typeof options.onError === 'string') {
-            return str2fn(server.methods, options.onError)(err, reply);
-          }
-          if (typeof viewConfig.onError === 'string') {
-            return str2fn(server.methods, viewConfig.onError)(err, reply);
-          }
-          // todo: handle per-view onError
-          return reply(Boom.wrap(err));
-        }
-
-        // Returned early in preProcess
-        if (!data.globals && !data.locals) {
-          return;
-        }
-
-        const combinedData = aug('deep', {}, data.globals, data.locals);
-        if (options.debug) {
-          server.log(['hapi-views', 'debug'], {
-            data: combinedData,
-            path: request.url.path
-          });
-        }
-        if (request.query.json === '1') {
-          return reply(combinedData).type('application/json');
-        }
-
-        if (viewConfig.preResponse) {
-          return str2fn(server.methods, viewConfig.preResponse)(request, options, combinedData, reply, () => {
-            reply.view(viewConfig.view, combinedData);
-          });
-        }
-
-        return reply.view(viewConfig.view, combinedData);
-      });
-    };
-  };
-
+  serverMethods.forEach((methodName) => {
+    // todo: add caching options:
+    server.method(`views.${methodName}`, require(`./methods/views/${methodName}.js`), {});
+  });
   //routes
   async.forEachOfSeries(options.views, (config, path, cb) => {
+    config.options = options;
     server.route({
       path,
       method: 'get',
