@@ -1,35 +1,62 @@
 'use strict';
-const api = require('./api');
-const inject = require('./inject');
-const yaml = require('./yaml');
-const method = require('./method');
 const async = require('async');
-const varson = require('varson');
-const Hoek = require('hoek');
+const data = require('./data.js');
+const path = require('path');
 
-module.exports = (request, config, done) => {
+const serverMethods = ['api', 'inject', 'method', 'yaml'];
+module.exports = (request, config, allDone) => {
+  const out = {};
+  serverMethods.forEach((methodName) => {
+    out[methodName] = {};
+  });
+  async.autoInject({
+    methodArray(done) {
+      // get an array of objects, each with the 'type' property to specify the server method to use:
+      const methodArray = [];
+      serverMethods.forEach((methodName) => {
+        const methodConfig = config[methodName] || {};
+        Object.keys(methodConfig).forEach((key) => {
+          const method = { type: methodName, key, data: methodConfig[key] };
+          methodArray.push(method);
+        });
+      });
+      return done(null, methodArray);
+    },
+    results(methodArray, done) {
+      async.map(methodArray, (methodData, mapDone) => {
+        // the yaml method needs to know the location of the yaml file before calling:
+        if (methodData.type === 'yaml') {
+          methodData.data = path.join(config.options.dataPath, methodData.data);
+        }
+        request.server.methods.views[methodData.type](request, methodData.data, (err, result) => {
+          out[methodData.type][methodData.key] = result;
+          return mapDone(err, out);
+        });
+      }, done);
+    },
+    data(results, done) {
+      data(request, config.data, out, (err, dataResult) => {
+        if (err) {
+          return allDone(err);
+        }
+        if (dataResult) {
+          return done(null, dataResult);
+        }
+        return done(null, out);
+      });
+    }
+  }, (err, results) => {
+    if (err) {
+      return allDone(err);
+    }
+    return allDone(null, results.data);
+  });
+};
+
+  /*
   async.auto({
     yaml: cb => yaml(request, config.yaml, config.options.dataPath, cb),
-    api: cb => api(request, config.api, cb),
-    method: cb => method(request, config.method, cb),
-    inject: cb => inject(request, config.inject, cb),
     data: ['inject', 'yaml', 'api', 'method', (results, cb) => {
-      if (!config.data) {
-        return cb(null);
-      }
-      if (typeof config.data === 'string') {
-        return cb(null, results[config.data]);
-      }
-      const data = Hoek.clone(config.data);
-      const context = Hoek.clone(results);
-      context.request = {
-        params: request.params,
-        query: request.query,
-        url: request.url,
-        auth: request.auth
-      };
-      const out = varson(data, context, { start: '{', end: '}' });
-      cb(null, out);
     }],
     dataMethod: ['data', (results, cb) => {
       if (!config.dataMethod) {
@@ -56,3 +83,4 @@ module.exports = (request, config, done) => {
     done(null, results);
   });
 };
+*/

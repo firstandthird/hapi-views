@@ -4,6 +4,7 @@ const async = require('async');
 const hoek = require('hoek');
 const aug = require('aug');
 const renderHandler = require('./lib/handler.js');
+const serverMethods = ['api', 'inject', 'yaml', 'method'];
 const defaults = {
   routeConfig: {},
   debug: false,
@@ -18,7 +19,10 @@ exports.register = function(server, options, next) {
       'Cache option is deprecated, use options.routeConfig.cache instead'
     );
   }
-
+  serverMethods.forEach((methodName) => {
+    // todo: add caching options:
+    server.method(`views.${methodName}`, require(`./methods/views/${methodName}.js`), {});
+  });
   //routes
   async.forEachOfSeries(options.views, (config, path, cb) => {
     config.options = options;
