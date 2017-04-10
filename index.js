@@ -4,7 +4,7 @@ const async = require('async');
 const hoek = require('hoek');
 const aug = require('aug');
 const renderHandler = require('./lib/handler.js');
-const serverMethods = ['api', 'inject', 'yaml', 'method'];
+const serverMethods = ['api', 'inject', 'yaml', 'method', 'fetch'];
 const defaults = {
   routeConfig: {},
   debug: false,
