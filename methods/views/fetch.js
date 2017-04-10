@@ -1,14 +1,17 @@
 'use strict';
 const async = require('async');
-const data = require('./data.js');
+const getData = require('./data.js');
 const path = require('path');
+const Hoek = require('hoek');
 
 const serverMethods = ['api', 'inject', 'method', 'yaml'];
 module.exports = (request, config, allDone) => {
+  // set up an object to keep track of results:
   const out = {};
   serverMethods.forEach((methodName) => {
     out[methodName] = {};
   });
+  // populate 'out':
   async.autoInject({
     methodArray(done) {
       // get an array of objects, each with the 'type' property to specify the server method to use:
@@ -22,7 +25,7 @@ module.exports = (request, config, allDone) => {
       });
       return done(null, methodArray);
     },
-    results(methodArray, done) {
+    populateOutput(methodArray, done) {
       async.map(methodArray, (methodData, mapDone) => {
         // the yaml method needs to know the location of the yaml file before calling:
         if (methodData.type === 'yaml') {
@@ -34,8 +37,8 @@ module.exports = (request, config, allDone) => {
         });
       }, done);
     },
-    data(results, done) {
-      data(request, config.data, out, (err, dataResult) => {
+    data(populateOutput, done) {
+      getData(request, config.data, out, (err, dataResult) => {
         if (err) {
           return allDone(err);
         }
@@ -44,43 +47,24 @@ module.exports = (request, config, allDone) => {
         }
         return done(null, out);
       });
+    },
+    dataMethod(data, done) {
+      if (!config.dataMethod) {
+        return done();
+      }
+      const serverMethod = Hoek.reach(request.server.methods, config.dataMethod);
+      if (!serverMethod) {
+        return done(new Error(`${serverMethod} is not a server method`));
+      }
+      serverMethod(data, done);
     }
   }, (err, results) => {
     if (err) {
       return allDone(err);
     }
+    if (results.dataMethod) {
+      return allDone(null, results.dataMethod);
+    }
     return allDone(null, results.data);
   });
 };
-
-  /*
-  async.auto({
-    yaml: cb => yaml(request, config.yaml, config.options.dataPath, cb),
-    data: ['inject', 'yaml', 'api', 'method', (results, cb) => {
-    }],
-    dataMethod: ['data', (results, cb) => {
-      if (!config.dataMethod) {
-        return cb(null);
-      }
-      const serverMethod = Hoek.reach(request.server.methods, config.dataMethod);
-      if (!serverMethod) {
-        return cb(new Error(`${serverMethod} is not a server method`));
-      }
-      serverMethod(results.data || results, cb);
-    }]
-  }, (err, results) => {
-    if (err) {
-      return done(err);
-    }
-    if (results.dataMethod) {
-      return done(null, results.dataMethod);
-    }
-    delete results.dataMethod;
-    if (results.data) {
-      return done(null, results.data);
-    }
-    delete results.data;
-    done(null, results);
-  });
-};
-*/
