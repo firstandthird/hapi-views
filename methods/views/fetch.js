@@ -44,7 +44,8 @@ module.exports = (request, config, allDone) => {
         if (methodData.type === 'inject') {
           methodData.data = varson({ url: methodData.data }, request, varsonSettings).url;
         }
-        request.server.methods.views[methodData.type](request, methodData.data, (err, result) => {
+        const methodName = config.enableCache === false ? `${methodData.type}_noCache` : methodData.type;
+        request.server.methods.views[methodName](request, methodData.data, (err, result) => {
           out[methodData.type][methodData.key] = result;
           return mapDone(err, out);
         });

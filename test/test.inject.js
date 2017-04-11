@@ -138,7 +138,7 @@ lab.experiment('disable ?json=1', () => {
         register: require('../'),
         options: {
           // debug: true,
-          allowJson: false,
+          allowDebugQuery: false,
           dataPath: `${process.cwd()}/test/yaml`,
           views: {
             '/apivar/{id}': {
