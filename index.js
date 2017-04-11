@@ -29,14 +29,6 @@ exports.register = function(server, options, next) {
           // cache key will be the url of the api call:
           methodOptions.generateKey = function(genRequest, url) { return typeof url === 'string' ? url : url.url; };
           break;
-        case 'method':
-          // cache key will be the method name + the string representation of its arguments:
-          methodOptions.generateKey = function(genRequest, method) {
-            const name = typeof method === 'string' ? method : method.name;
-            const argsString = method.args !== undefined ? JSON.stringify(method.args) : '';
-            return `${name}-${argsString}`;
-          };
-          break;
         case 'inject':
           // cache key will be the path we're injecting to
           methodOptions.generateKey = function(genRequest, url) {

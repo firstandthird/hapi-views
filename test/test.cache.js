@@ -122,36 +122,4 @@ lab.experiment('api', () => {
       });
     });
   });
-
-  lab.test('method', done => {
-    let callCount = 0;
-    server.method('testerino', (arg1, arg2, arg3, next) => {
-      callCount ++;
-      if (typeof arg1 === 'function') {
-        next = arg1;
-      }
-      next(null, 'test');
-    });
-    server.inject({
-      url: '/methodtest'
-    }, response => {
-      const context = response.request.response.source.context;
-      expect(context.method.var1).to.equal('test');
-      expect(callCount).to.equal(2);
-      server.inject({
-        url: '/methodtest'
-      }, response2 => {
-        const context2 = response.request.response.source.context;
-        expect(context2.method.var1).to.equal('test');
-        expect(callCount).to.equal(2);
-        server.inject({
-          url: '/methodArgstest'
-        }, (response3) => {
-          // same method but different args should still call:
-          expect(callCount).to.equal(3);
-          done();
-        });
-      });
-    });
-  });
 });
