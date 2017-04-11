@@ -33,7 +33,19 @@ lab.experiment('api', () => {
             '/injecttest': {
               view: 'api',
               inject: { var1: '/injectRoute' },
-            }
+            },
+            '/apiParams/': {
+              view: 'api',
+              api: {
+                var1: 'http://localhost:9991/checkUrl/{info.received}'
+              }
+            },
+            '/injectParams/': {
+              view: 'api',
+              inject: {
+                var1: '/checkUrlInject/{info.received}'
+              }
+            },
           }
         }
       }], error => {
@@ -88,6 +100,33 @@ lab.experiment('api', () => {
     });
   });
 
+  lab.test('api with route params', done => {
+    let callCount = 0;
+    const ids = [];
+    server.route({
+      method: 'GET',
+      path: '/checkUrl/{requestId}',
+      handler(request, reply) {
+        callCount ++;
+        ids.push(request.params.requestId);
+        reply({ test: true });
+      }
+    });
+    server.inject({
+      url: '/apiParams/'
+    }, response => {
+      setTimeout(() => {
+        server.inject({
+          url: '/apiParams/'
+        }, response2 => {
+          expect(callCount).to.equal(2);
+          expect(ids[0]).to.not.equal(ids[1]);
+          done();
+        });
+      }, 1000);
+    });
+  });
+
   lab.test('inject', done => {
     let callCount = 0;
     server.route({
@@ -112,6 +151,33 @@ lab.experiment('api', () => {
         expect(callCount).to.equal(1);
         done();
       });
+    });
+  });
+
+  lab.test('inject with route params', done => {
+    let callCount = 0;
+    const ids = [];
+    server.route({
+      method: 'GET',
+      path: '/checkUrlInject/{requestId}',
+      handler(request, reply) {
+        callCount ++;
+        ids.push(request.params.requestId);
+        reply({ test: true });
+      }
+    });
+    server.inject({
+      url: '/injectParams/'
+    }, response => {
+      setTimeout(() => {
+        server.inject({
+          url: '/injectParams/'
+        }, response2 => {
+          expect(callCount).to.equal(2);
+          expect(ids[0]).to.not.equal(ids[1]);
+          done();
+        });
+      }, 1000);
     });
   });
 });
