@@ -3,6 +3,8 @@ const async = require('async');
 const getData = require('./data.js');
 const path = require('path');
 const Hoek = require('hoek');
+const varson = require('varson');
+const varsonSettings = { start: '{', end: '}' };
 
 const serverMethods = ['api', 'inject', 'method', 'yaml'];
 module.exports = (request, config, allDone) => {
@@ -30,6 +32,17 @@ module.exports = (request, config, allDone) => {
         // the yaml method needs to know the location of the yaml file before calling:
         if (methodData.type === 'yaml') {
           methodData.data = path.join(config.options.dataPath, methodData.data);
+        }
+        // any url-consuming methods need their url resolved first:
+        if (methodData.type === 'api') {
+          if (typeof methodData.data === 'string') {
+            methodData.data = varson({ url: methodData.data }, request, varsonSettings).url;
+          } else {
+            methodData.data.url = varson({ url: methodData.data.url }, request, varsonSettings).url;
+          }
+        }
+        if (methodData.type === 'inject') {
+          methodData.data = varson({ url: methodData.data }, request, varsonSettings).url;
         }
         request.server.methods.views[methodData.type](request, methodData.data, (err, result) => {
           out[methodData.type][methodData.key] = result;

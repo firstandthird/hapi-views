@@ -165,7 +165,6 @@ lab.experiment('disable ?json=1', () => {
         engines: { html: require('handlebars') },
         path: `${__dirname}/views`
       });
-
       server.route({
         method: 'GET',
         path: '/api',
@@ -173,7 +172,6 @@ lab.experiment('disable ?json=1', () => {
           reply({ test: true });
         }
       });
-
       server.start((err) => {
         Hoek.assert(!err, err);
         start();
