@@ -13,12 +13,6 @@ const defaults = {
 
 exports.register = function(server, options, next) {
   options = hoek.applyToDefaults(defaults, options);
-  if (options.cache) {
-    server.log(
-      ['error', 'hapi-views'],
-      'Cache option is deprecated, use options.routeConfig.cache instead'
-    );
-  }
   serverMethods.forEach((methodName) => {
     // todo: add caching options:
     const methodOptions = {};
