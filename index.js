@@ -22,10 +22,6 @@ exports.register = function(server, options, next) {
           // cache key will be the url of the api call:
           methodOptions.cache = Object.assign({}, options.cache);
           methodOptions.generateKey = function(genRequest, url) {
-            const requestedRoute = options.views[genRequest.route.path];
-            if (requestedRoute && requestedRoute.noCache) {
-              return `${Math.random()}_${new Date().getTime()}`;
-            }
             return typeof url === 'string' ? url : url.url;
           };
           break;
@@ -33,10 +29,6 @@ exports.register = function(server, options, next) {
           // cache key will be the path we're injecting to
           methodOptions.cache = Object.assign({}, options.cache);
           methodOptions.generateKey = function(genRequest, url) {
-            const requestedRoute = options.views[genRequest.route.path];
-            if (requestedRoute && requestedRoute.noCache) {
-              return `${Math.random()}_${new Date().getTime()}`;
-            }
             return url;
           };
           break;
@@ -45,6 +37,8 @@ exports.register = function(server, options, next) {
       }
     }
     server.method(`views.${methodName}`, require(`./methods/views/${methodName}.js`), methodOptions);
+    // also register a cacheless version for routes that need it:
+    server.method(`views.${methodName}_noCache`, require(`./methods/views/${methodName}.js`));
   });
   // register the fetch method:
   server.method('views.fetch', require('./methods/views/fetch.js'), {});
