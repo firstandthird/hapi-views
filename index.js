@@ -4,7 +4,7 @@ const async = require('async');
 const hoek = require('hoek');
 const aug = require('aug');
 const renderHandler = require('./lib/handler.js');
-const serverMethods = ['api', 'inject', 'yaml', 'method', 'fetch'];
+const serverMethods = ['api', 'inject', 'yaml', 'method'];
 const defaults = {
   routeConfig: {},
   debug: false,
@@ -21,8 +21,36 @@ exports.register = function(server, options, next) {
   }
   serverMethods.forEach((methodName) => {
     // todo: add caching options:
-    server.method(`views.${methodName}`, require(`./methods/views/${methodName}.js`), {});
+    const methodOptions = {};
+    if (options.enableCache) {
+      methodOptions.cache = options.cache;
+      switch (methodName) {
+        case 'api':
+          // cache key will be the url of the api call:
+          methodOptions.generateKey = function(genRequest, url) { return typeof url === 'string' ? url : url.url; };
+          break;
+        case 'method':
+          // cache key will be the method name + the string representation of its arguments:
+          methodOptions.generateKey = function(genRequest, method) {
+            const name = typeof method === 'string' ? method : method.name;
+            const argsString = method.args !== undefined ? JSON.stringify(method.args) : '';
+            return `${name}-${argsString}`;
+          };
+          break;
+        case 'inject':
+          // cache key will be the path we're injecting to
+          methodOptions.generateKey = function(genRequest, url) {
+            return url;
+          };
+          break;
+        default:
+          break;
+      }
+    }
+    server.method(`views.${methodName}`, require(`./methods/views/${methodName}.js`), methodOptions);
   });
+  // register the fetch method:
+  server.method('views.fetch', require('./methods/views/fetch.js'), {});
   //routes
   async.forEachOfSeries(options.views, (config, path, cb) => {
     config.options = options;
