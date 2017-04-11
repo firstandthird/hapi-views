@@ -6,7 +6,7 @@ const aug = require('aug');
 const renderHandler = require('./lib/handler.js');
 const serverMethods = ['api', 'inject', 'yaml', 'method'];
 const defaults = {
-  allowJson: true, // adds the application/json mime type when query contains 'json=1'
+  allowDebugQuery: true, //allows ?json=1
   routeConfig: {},
   debug: false,
   views: {}
