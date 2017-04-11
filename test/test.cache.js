@@ -30,14 +30,6 @@ lab.experiment('api', () => {
               view: 'api',
               api: { key1: 'http://localhost:9991/testRoute', key2: { url: 'http://localhost:9991/testRoute2' } }
             },
-            '/methodtest': {
-              view: 'api',
-              method: { var1: 'testerino', var2: { name: 'testerino', args: [true, 1, 'fifteen'] } }
-            },
-            '/methodArgstest': {
-              view: 'api',
-              method: { var1: { name: 'testerino', args: [false, 3, 'twelve'] } }
-            },
             '/injecttest': {
               view: 'api',
               inject: { var1: '/injectRoute' },
