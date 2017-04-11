@@ -21,12 +21,22 @@ exports.register = function(server, options, next) {
         case 'api':
           // cache key will be the url of the api call:
           methodOptions.cache = Object.assign({}, options.cache);
-          methodOptions.generateKey = function(genRequest, url) { return typeof url === 'string' ? url : url.url; };
+          methodOptions.generateKey = function(genRequest, url) {
+            const requestedRoute = options.views[genRequest.route.path];
+            if (requestedRoute && requestedRoute.noCache) {
+              return `${Math.random()}_${new Date().getTime()}`;
+            }
+            return typeof url === 'string' ? url : url.url;
+          };
           break;
         case 'inject':
           // cache key will be the path we're injecting to
           methodOptions.cache = Object.assign({}, options.cache);
           methodOptions.generateKey = function(genRequest, url) {
+            const requestedRoute = options.views[genRequest.route.path];
+            if (requestedRoute && requestedRoute.noCache) {
+              return `${Math.random()}_${new Date().getTime()}`;
+            }
             return url;
           };
           break;
