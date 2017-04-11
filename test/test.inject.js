@@ -124,3 +124,53 @@ lab.experiment('injects', () => {
     });
   });
 });
+
+lab.experiment('injects without json=1', () => {
+  const server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' }
+  });
+  server.connection();
+  lab.before(start => {
+    // start server
+    server.register([
+      require('vision'),
+      {
+        register: require('../'),
+        options: {
+          // debug: true,
+          dataPath: `${process.cwd()}/test/yaml`,
+          allowJson: false,
+          views: {
+            '/injectmap': {
+              inject: {
+                api: '/api'
+              },
+              view: 'data'
+            },
+          }
+        }
+      }
+    ], error => {
+      server.route({
+        method: 'GET',
+        path: '/api',
+        handler(request, reply) {
+          reply('test');
+        }
+      });
+      server.start((err) => {
+        Hoek.assert(!err, err);
+        start();
+      });
+    });
+  });
+
+  lab.test('disable ?json=1', done => {
+    server.inject({
+      url: '/injectmap?json=1'
+    }, response => {
+      expect(response.headers['content-type']).to.not.contain('application/json');
+      done();
+    });
+  });
+});
