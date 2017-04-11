@@ -30,9 +30,19 @@ lab.experiment('api', () => {
               view: 'api',
               api: { key1: 'http://localhost:9991/testRoute', key2: { url: 'http://localhost:9991/testRoute2' } }
             },
+            '/apitestNocache': {
+              view: 'api',
+              enableCache: false,
+              api: { key1: 'http://localhost:9991/testRouteNoCache' }
+            },
             '/injecttest': {
               view: 'api',
               inject: { var1: '/injectRoute' },
+            },
+            '/injecttestNocache': {
+              view: 'api',
+              enableCache: false,
+              inject: { key1: 'http://localhost:9991/testInjectNoCache' }
             },
             '/apiParams/': {
               view: 'api',
@@ -127,6 +137,32 @@ lab.experiment('api', () => {
     });
   });
 
+  lab.test('api with cache disabled', done => {
+    let callCount = 0;
+    server.route({
+      method: 'GET',
+      path: '/testRouteNoCache',
+      handler(request, reply) {
+        callCount ++;
+        reply({ test: true });
+      }
+    });
+    server.inject({
+      url: '/apitestNocache'
+    }, response => {
+      const context = response.request.response.source.context;
+      expect(context.api.key1).to.equal({ test: true });
+      server.inject({
+        url: '/apitestNocache'
+      }, response2 => {
+        const context2 = response.request.response.source.context;
+        expect(context2.api.key1).to.equal({ test: true });
+        expect(callCount).to.equal(2);
+        done();
+      });
+    });
+  });
+
   lab.test('inject', done => {
     let callCount = 0;
     server.route({
@@ -149,6 +185,32 @@ lab.experiment('api', () => {
         const context2 = response.request.response.source.context;
         expect(context2.inject.var1).to.equal({ test: true });
         expect(callCount).to.equal(1);
+        done();
+      });
+    });
+  });
+
+  lab.test('inject with cache disabled', done => {
+    let callCount = 0;
+    server.route({
+      method: 'GET',
+      path: '/testInjectNoCache',
+      handler(request, reply) {
+        callCount ++;
+        reply({ test: true });
+      }
+    });
+    server.inject({
+      url: '/injecttestNocache'
+    }, response => {
+      const context = response.request.response.source.context;
+      expect(context.inject.key1).to.equal({ test: true });
+      server.inject({
+        url: '/injecttestNocache'
+      }, response2 => {
+        const context2 = response.request.response.source.context;
+        expect(context2.inject.key1).to.equal({ test: true });
+        expect(callCount).to.equal(2);
         done();
       });
     });

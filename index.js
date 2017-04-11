@@ -22,7 +22,9 @@ exports.register = function(server, options, next) {
         case 'api':
           // cache key will be the url of the api call:
           methodOptions.cache = Object.assign({}, options.cache);
-          methodOptions.generateKey = function(genRequest, url) { return typeof url === 'string' ? url : url.url; };
+          methodOptions.generateKey = function(genRequest, url) {
+            return typeof url === 'string' ? url : url.url;
+          };
           break;
         case 'inject':
           // cache key will be the path we're injecting to
@@ -36,6 +38,8 @@ exports.register = function(server, options, next) {
       }
     }
     server.method(`views.${methodName}`, require(`./methods/views/${methodName}.js`), methodOptions);
+    // also register a cacheless version for routes that need it:
+    server.method(`views.${methodName}_noCache`, require(`./methods/views/${methodName}.js`));
   });
   // register the fetch method:
   server.method('views.fetch', require('./methods/views/fetch.js'), {});
