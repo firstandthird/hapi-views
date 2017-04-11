@@ -125,7 +125,7 @@ lab.experiment('injects', () => {
   });
 });
 
-lab.experiment('injects without json=1', () => {
+lab.experiment('disable ?json=1', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
   });
@@ -138,38 +138,54 @@ lab.experiment('injects without json=1', () => {
         register: require('../'),
         options: {
           // debug: true,
-          dataPath: `${process.cwd()}/test/yaml`,
           allowJson: false,
+          dataPath: `${process.cwd()}/test/yaml`,
           views: {
+            '/apivar/{id}': {
+              view: 'api',
+              api: { var1: 'http://jsonplaceholder.typicode.com/posts?id={params.id}' }
+            },
+            '/inject': {
+              inject: { api: '/api' },
+              view: 'data'
+            },
             '/injectmap': {
               inject: {
-                api: '/api'
+                api: '/api',
+                apivar: '/apivar/1'
               },
               view: 'data'
             },
           }
         }
-      }
-    ], error => {
+      }], error => {
+      Hoek.assert(!error, error);
+
+      server.views({
+        engines: { html: require('handlebars') },
+        path: `${__dirname}/views`
+      });
+
       server.route({
         method: 'GET',
         path: '/api',
         handler(request, reply) {
-          reply('test').type('application/text');
+          reply({ test: true });
         }
       });
+
       server.start((err) => {
         Hoek.assert(!err, err);
         start();
       });
     });
   });
-
-  lab.test('disable ?json=1', done => {
+  // tests
+  lab.test('inject', done => {
     server.inject({
-      url: '/injectmap?json=1'
+      url: '/inject?json=1'
     }, response => {
-      expect(response.headers['content-type']).to.not.contain('application/json');
+      expect(response.headers['content-type']).to.contain('text/html');
       done();
     });
   });
