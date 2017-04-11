@@ -32,7 +32,7 @@ lab.experiment('api', () => {
             },
             '/apitestNocache': {
               view: 'api',
-              noCache: true,
+              enableCache: false,
               api: { key1: 'http://localhost:9991/testRouteNoCache' }
             },
             '/injecttest': {
@@ -41,7 +41,7 @@ lab.experiment('api', () => {
             },
             '/injecttestNocache': {
               view: 'api',
-              noCache: true,
+              enableCache: false,
               inject: { key1: 'http://localhost:9991/testInjectNoCache' }
             },
             '/apiParams/': {
