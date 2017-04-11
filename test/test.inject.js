@@ -124,3 +124,67 @@ lab.experiment('injects', () => {
     });
   });
 });
+
+lab.experiment('disable ?json=1', () => {
+  const server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' }
+  });
+  server.connection();
+  lab.before(start => {
+    // start server
+    server.register([
+      require('vision'),
+      {
+        register: require('../'),
+        options: {
+          // debug: true,
+          allowDebugQuery: false,
+          dataPath: `${process.cwd()}/test/yaml`,
+          views: {
+            '/apivar/{id}': {
+              view: 'api',
+              api: { var1: 'http://jsonplaceholder.typicode.com/posts?id={params.id}' }
+            },
+            '/inject': {
+              inject: { api: '/api' },
+              view: 'data'
+            },
+            '/injectmap': {
+              inject: {
+                api: '/api',
+                apivar: '/apivar/1'
+              },
+              view: 'data'
+            },
+          }
+        }
+      }], error => {
+      Hoek.assert(!error, error);
+
+      server.views({
+        engines: { html: require('handlebars') },
+        path: `${__dirname}/views`
+      });
+      server.route({
+        method: 'GET',
+        path: '/api',
+        handler(request, reply) {
+          reply({ test: true });
+        }
+      });
+      server.start((err) => {
+        Hoek.assert(!err, err);
+        start();
+      });
+    });
+  });
+  // tests
+  lab.test('inject', done => {
+    server.inject({
+      url: '/inject?json=1'
+    }, response => {
+      expect(response.headers['content-type']).to.contain('text/html');
+      done();
+    });
+  });
+});
