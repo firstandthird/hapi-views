@@ -155,7 +155,7 @@ lab.experiment('injects without json=1', () => {
         method: 'GET',
         path: '/api',
         handler(request, reply) {
-          reply('test');
+          reply('test').type('application/text');
         }
       });
       server.start((err) => {
