@@ -52,7 +52,9 @@ lab.experiment('injects', () => {
         method: 'GET',
         path: '/api',
         handler(request, reply) {
-          reply({ test: true });
+          expect(request.info.referrer).to.equal('refererWithTwoRs');
+          expect(request.headers).to.include('user-agent');
+          return reply({ test: true });
         }
       });
 
@@ -76,7 +78,10 @@ lab.experiment('injects', () => {
   // tests
   lab.test('inject', done => {
     server.inject({
-      url: '/inject'
+      url: '/inject',
+      headers: {
+        referer: 'refererWithTwoRs'
+      }
     }, response => {
       const context = response.request.response.source.context;
       expect(context).to.equal({
@@ -90,7 +95,10 @@ lab.experiment('injects', () => {
   });
   lab.test('injectmap', done => {
     server.inject({
-      url: '/injectmap'
+      url: '/injectmap',
+      headers: {
+        referer: 'refererWithTwoRs'
+      }
     }, response => {
       const context = response.request.response.source.context;
       expect(context).to.equal({
@@ -107,7 +115,10 @@ lab.experiment('injects', () => {
   });
   lab.test('?json=1', done => {
     server.inject({
-      url: '/injectmap?json=1'
+      url: '/injectmap?json=1',
+      headers: {
+        referer: 'refererWithTwoRs'
+      }
     }, response => {
       expect(response.headers['content-type']).to.contain('application/json');
       const context = response.result;
