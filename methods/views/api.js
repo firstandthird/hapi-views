@@ -1,12 +1,18 @@
 'use strict';
 const wreck = require('wreck');
 const Boom = require('boom');
+const version = require('../../package.json').version;
 
 module.exports = (request, api, allDone) => {
-  const options = { json: true };
+  const options = {
+    json: true,
+    headers: {}
+  };
   if (api.headers) {
     options.headers = api.headers;
   }
+  options.headers.referer = request.info.referrer;
+  options.headers['user-agent'] = `hapi-views/${version}`;
   const url = typeof api === 'string' ? api : api.url;
   wreck.get(url, options, (err, res, payload) => {
     if (err) {
