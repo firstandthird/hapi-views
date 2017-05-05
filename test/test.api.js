@@ -75,6 +75,8 @@ lab.experiment('api', () => {
         method: 'GET',
         path: '/api',
         handler(request, reply) {
+          expect(request.info.referrer).to.equal('refererWithTwoRs');
+          expect(request.headers).to.include('user-agent');
           reply({ test: true });
         }
       });
