@@ -25,6 +25,10 @@ lab.experiment('api', () => {
               view: 'api',
               api: { key1: 'http://jsonplaceholder.typicode.com/posts?id=1' }
             },
+            '/apitimeout': {
+              view: 'api',
+              api: { key1: 'http://localhost:9991/timeout' }
+            },
             '/apivar/{id}': {
               view: 'api',
               api: { var1: 'http://jsonplaceholder.typicode.com/posts?id={params.id}' }
@@ -61,7 +65,13 @@ lab.experiment('api', () => {
         engines: { html: require('handlebars') },
         path: `${__dirname}/views`
       });
-
+      server.route({
+        method: 'GET',
+        path: '/timeout',
+        handler(request, reply) {
+          setTimeout(() => reply({}), 6000);
+        }
+      });
       server.route({
         method: 'GET',
         path: '/checkHeader',
@@ -125,6 +135,14 @@ lab.experiment('api', () => {
           ]
         }
       });
+      done();
+    });
+  });
+  lab.test('api with timeout', { timeout: 10000 }, done => {
+    server.inject({
+      url: '/apitimeout'
+    }, response => {
+      expect(response.statusCode).to.equal(504);
       done();
     });
   });

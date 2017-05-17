@@ -5,6 +5,7 @@ const version = require('../../package.json').version;
 
 module.exports = (request, api, allDone) => {
   const options = {
+    timeout: 5000,
     json: true,
     headers: {}
   };
