@@ -5,6 +5,7 @@ const lab = exports.lab = Lab.script();
 const Hoek = require('hoek');
 const expect = require('code').expect;
 const Hapi = require('hapi');
+const boom = require('boom');
 
 lab.experiment('api', () => {
   const server = new Hapi.Server({
@@ -28,6 +29,10 @@ lab.experiment('api', () => {
             '/apitimeout': {
               view: 'api',
               api: { key1: 'http://localhost:9991/timeout' }
+            },
+            '/apierror': {
+              view: 'api',
+              api: { key1: 'http://localhost:9991/apiError' }
             },
             '/apivar/{id}': {
               view: 'api',
@@ -88,6 +93,14 @@ lab.experiment('api', () => {
           expect(request.info.referrer).to.equal('refererWithTwoRs');
           expect(request.headers).to.include('user-agent');
           reply({ test: true });
+        }
+      });
+
+      server.route({
+        method: 'GET',
+        path: '/apiError',
+        handler(request, reply) {
+          reply(boom.locked('uh uh no'));
         }
       });
 
@@ -162,6 +175,17 @@ lab.experiment('api', () => {
           ]
         }
       });
+      done();
+    });
+  });
+  lab.test('api friendly boom errors', done => {
+    server.inject({
+      url: '/apierror'
+    }, response => {
+      // verify boom status code and friendly error message:
+      expect(response.statusCode).to.equal(423);
+      expect(response.statusMessage).to.equal('Locked');
+      expect(response.payload).to.include('uh uh no');
       done();
     });
   });
