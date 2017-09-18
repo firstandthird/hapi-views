@@ -17,6 +17,10 @@ module.exports = (request, api, allDone) => {
   const url = typeof api === 'string' ? api : api.url;
   wreck.get(url, options, (err, res, payload) => {
     if (err) {
+      // boom response can be repackaged for hapi to pass back to the caller:
+      if (err.isBoom) {
+        return allDone(Boom.create(err.output.statusCode, err.data.payload.message));
+      }
       return allDone(err);
     }
     if (res.statusCode !== 200) {

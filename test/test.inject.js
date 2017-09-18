@@ -7,7 +7,7 @@ const Hoek = require('hoek');
 const expect = require('code').expect;
 const Hapi = require('hapi');
 const EOL = require('os').EOL;
-
+const boom = require('boom');
 lab.experiment('injects', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
@@ -29,6 +29,10 @@ lab.experiment('injects', () => {
             },
             '/inject': {
               inject: { api: '/api' },
+              view: 'data'
+            },
+            '/injecterr': {
+              inject: { api: '/apiError' },
               view: 'data'
             },
             '/injectmap': {
@@ -69,6 +73,13 @@ lab.experiment('injects', () => {
       server.method('myScope.myMethod', function(next) {
         next(null, 'test3');
       });
+      server.route({
+        method: 'GET',
+        path: '/apiError',
+        handler(request, reply) {
+          reply(boom.locked('go away'));
+        }
+      });
       server.start((err) => {
         Hoek.assert(!err, err);
         start();
@@ -90,6 +101,19 @@ lab.experiment('injects', () => {
         method: {},
         inject: { api: { test: true } }
       });
+      done();
+    });
+  });
+  lab.test('injecterr', done => {
+    server.inject({
+      url: '/injecterr',
+      headers: {
+        referer: 'refererWithTwoRs'
+      }
+    }, response => {
+      // make sure error message and friendly error passed up:
+      expect(response.statusCode).to.equal(423);
+      expect(response.result.message).to.equal('go away');
       done();
     });
   });

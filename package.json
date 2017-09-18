@@ -26,12 +26,12 @@
   "dependencies": {
     "async": "2.4.0",
     "aug": "1.0.2",
-    "boom": "4.3.1",
+    "boom": "^5.2.0",
     "hoek": "4.1.1",
     "js-yaml": "3.8.4",
     "str2fn": "2.0.0",
     "varson": "1.0.1",
-    "wreck": "12.2.0"
+    "wreck": "^12.5.0"
   },
   "devDependencies": {
     "code": "^4.0.0",
@@ -40,7 +40,7 @@
     "eslint-config-firstandthird": "3.1.0",
     "eslint-plugin-import": "2.2.0",
     "handlebars": "^4.0.5",
-    "hapi": "^16.0.2",
+    "hapi": "^16.6.0",
     "lab": "^12.1.0",
     "vision": "^4.0.1"
   }
