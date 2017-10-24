@@ -34,7 +34,7 @@
     "wreck": "^12.5.0"
   },
   "devDependencies": {
-    "code": "^5.1.0",
+    "code": "^4.0.0",
     "coveralls": "^2.11.8",
     "eslint": "^4.9.0",
     "eslint-config-firstandthird": "^4.0.1",
