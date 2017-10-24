@@ -50,7 +50,7 @@ exports.register = function(server, options, next) {
       path,
       method: 'get',
       handler: renderHandler(config),
-      config: aug('deep', {}, options.routeConfig, config.routeConfig || {})
+      config: aug({}, options.routeConfig, config.routeConfig || {})
     });
 
     cb();

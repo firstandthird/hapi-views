@@ -129,7 +129,7 @@ lab.experiment('methods', () => {
       url: '/data'
     }, response => {
       const context = response.request.response.source.context;
-      expect(context).to.equal({ name: 'Jack', url: '/data', test: { ok: true } });
+      expect(context).to.equal({ name: 'Jack', url: '/data', test: { ok: 'true' } });
       done();
     });
   });
@@ -157,7 +157,7 @@ lab.experiment('methods', () => {
       url: '/data'
     }, response => {
       const context = response.request.response.source.context;
-      expect(context).to.equal({ name: 'Jack', url: '/data', test: { ok: true } });
+      expect(context).to.equal({ name: 'Jack', url: '/data', test: { ok: 'true' } });
       done();
     });
   });
