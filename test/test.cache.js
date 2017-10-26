@@ -11,6 +11,8 @@ lab.experiment('api', () => {
     debug: { request: '*', log: 'hapi-views' }
   });
   server.connection({ port: 9991 });
+  let callCount = 0;
+
   lab.before(start => {
     // start server
     server.register([
@@ -77,7 +79,7 @@ lab.experiment('api', () => {
   });
 
   lab.test('api', done => {
-    let callCount = 0;
+    callCount = 0;
     server.route({
       method: 'GET',
       path: '/testRoute',
@@ -111,7 +113,7 @@ lab.experiment('api', () => {
   });
 
   lab.test('api with route params', done => {
-    let callCount = 0;
+    callCount = 0;
     const ids = [];
     server.route({
       method: 'GET',
@@ -138,7 +140,7 @@ lab.experiment('api', () => {
   });
 
   lab.test('api with cache disabled', done => {
-    let callCount = 0;
+    callCount = 0;
     server.route({
       method: 'GET',
       path: '/testRouteNoCache',
@@ -163,8 +165,27 @@ lab.experiment('api', () => {
     });
   });
 
+  lab.test('nocache=1 will bypass caching', done => {
+    callCount = 0;
+    server.inject({
+      url: '/apitest?nocache=1'
+    }, response => {
+      const context = response.request.response.source.context;
+      expect(context.api.key1).to.equal({ test: true });
+      server.inject({
+        url: '/apitest?nocache=1'
+      }, response2 => {
+        const context2 = response.request.response.source.context;
+        expect(context2.api.key1).to.equal({ test: true });
+        expect(context2.api.key2).to.equal({ test2: '1' });
+        expect(callCount).to.equal(2);
+        done();
+      });
+    });
+  });
+
   lab.test('inject', done => {
-    let callCount = 0;
+    callCount = 0;
     server.route({
       method: 'GET',
       path: '/injectRoute',
@@ -191,7 +212,7 @@ lab.experiment('api', () => {
   });
 
   lab.test('inject with cache disabled', done => {
-    let callCount = 0;
+    callCount = 0;
     server.route({
       method: 'GET',
       path: '/testInjectNoCache',
@@ -217,7 +238,7 @@ lab.experiment('api', () => {
   });
 
   lab.test('inject with route params', done => {
-    let callCount = 0;
+    callCount = 0;
     const ids = [];
     server.route({
       method: 'GET',
