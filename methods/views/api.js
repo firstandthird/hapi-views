@@ -19,7 +19,8 @@ module.exports = (request, api, allDone) => {
     if (err) {
       // boom response can be repackaged for hapi to pass back to the caller:
       if (err.isBoom) {
-        return allDone(Boom.create(err.output.statusCode, err.data.payload.message));
+        const mssg = (err.data) ? err.data.payload.message : err.output.payload.messge;
+        return allDone(Boom.create(err.output.statusCode, mssg));
       }
       return allDone(err);
     }

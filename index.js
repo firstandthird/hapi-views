@@ -6,6 +6,8 @@ const aug = require('aug');
 const renderHandler = require('./lib/handler.js');
 const serverMethods = ['api', 'inject', 'yaml', 'method'];
 const defaults = {
+  enableCache: false,
+  serveStale: true,
   allowDebugQuery: true, //allows ?json=1
   routeConfig: {},
   debug: false,

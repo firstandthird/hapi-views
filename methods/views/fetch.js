@@ -45,7 +45,11 @@ module.exports = (request, config, allDone) => {
           methodData.data = varson({ url: methodData.data }, request, varsonSettings).url;
         }
         const methodName = config.enableCache === false ? `${methodData.type}_noCache` : methodData.type;
-        request.server.methods.views[methodName](request, methodData.data, (err, result) => {
+        request.server.methods.views[methodName](request, methodData.data, (err, result, cacheData) => {
+          if (err && config.options.serveStale && cacheData) {
+            request.server.log(['hapi-views', 'fetch'], {err, message: `${methodName} returned an error. Serving stale content`});
+            err = null;
+          }
           out[methodData.type][methodData.key] = result;
           return mapDone(err, out);
         });

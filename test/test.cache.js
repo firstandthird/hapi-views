@@ -5,6 +5,7 @@ const lab = exports.lab = Lab.script();
 const Hoek = require('hoek');
 const expect = require('code').expect;
 const Hapi = require('hapi');
+const Boom = require('boom');
 
 lab.experiment('api', () => {
   const server = new Hapi.Server({
@@ -34,6 +35,10 @@ lab.experiment('api', () => {
               view: 'api',
               enableCache: false,
               api: { key1: 'http://localhost:9991/testRouteNoCache' }
+            },
+            '/apitestfail': {
+              view: 'api',
+              api: { key1: 'http://localhost:9991/testFailRoute' }
             },
             '/injecttest': {
               view: 'api',
@@ -78,6 +83,7 @@ lab.experiment('api', () => {
 
   lab.test('api', done => {
     let callCount = 0;
+    let firstRun = true;
     server.route({
       method: 'GET',
       path: '/testRoute',
@@ -163,6 +169,37 @@ lab.experiment('api', () => {
     });
   });
 
+  lab.test('api test with api fail', done => {
+    let firstRun = true;
+    server.route({
+      method: 'GET',
+      path: '/testFailRoute',
+      handler(req, reply) {
+        if (!firstRun) {
+          return reply(Boom.badImplementation('Random Error Message'));
+        }
+
+        firstRun = false;
+        reply({ one: 'une', two: 'deu' });
+      }
+    });
+    server.inject({
+      method: 'GET',
+      url: '/apitestfail'
+    }, resp => {
+      const context = resp.request.response.source.context;
+      expect(context.api.key1).to.equal({ one: 'une', two: 'deu' });
+      server.inject({
+        method: 'GET',
+        url: '/apitestfail'
+      }, resp2 => {
+        const contextDeu = resp2.request.response.source.context;
+        expect(contextDeu.api.key1).to.equal({ one: 'une', two: 'deu' });
+        done();
+      });
+    });
+  });
+  
   lab.test('inject', done => {
     let callCount = 0;
     server.route({
