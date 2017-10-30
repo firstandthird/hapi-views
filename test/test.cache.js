@@ -23,8 +23,11 @@ lab.experiment('api', () => {
         options: {
           //debug: true,
           enableCache: true,
+          serveStale: true,
           cache: {
             expiresIn: 60000,
+            staleIn: 2000,
+            staleTimeout: 200,
             generateTimeout: 100
           },
           dataPath: `${process.cwd()}/test/yaml`,
@@ -188,7 +191,7 @@ lab.experiment('api', () => {
     });
   });
 
-  lab.test('api test with api fail', done => {
+  lab.test('api test with api fail', { timeout: 3500 }, done => {
     let firstRun = true;
     server.route({
       method: 'GET',
@@ -208,14 +211,16 @@ lab.experiment('api', () => {
     }, resp => {
       const context = resp.request.response.source.context;
       expect(context.api.key1).to.equal({ one: 'une', two: 'deu' });
-      server.inject({
-        method: 'GET',
-        url: '/apitestfail'
-      }, resp2 => {
-        const contextDeu = resp2.request.response.source.context;
-        expect(contextDeu.api.key1).to.equal({ one: 'une', two: 'deu' });
-        done();
-      });
+      setTimeout(() => {
+        server.inject({
+          method: 'GET',
+          url: '/apitestfail'
+        }, resp2 => {
+          const contextDeu = resp2.request.response.source.context;
+          expect(contextDeu.api.key1).to.equal({ one: 'une', two: 'deu' });
+          done();
+        });
+      }, 3000);
     });
   });
 
