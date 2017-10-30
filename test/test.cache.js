@@ -199,7 +199,7 @@ lab.experiment('api', () => {
       });
     });
   });
-  
+
   lab.test('inject', done => {
     let callCount = 0;
     server.route({
