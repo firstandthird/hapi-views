@@ -44,12 +44,18 @@ module.exports = (request, config, allDone) => {
         if (methodData.type === 'inject') {
           methodData.data = varson({ url: methodData.data }, request, varsonSettings).url;
         }
+
         let nocache = config.enableCache === false;
         if (request.query.nocache === '1') {
           nocache = true;
         }
+
         const methodName = nocache ? `${methodData.type}_noCache` : methodData.type;
-        request.server.methods.views[methodName](request, methodData.data, (err, result) => {
+        request.server.methods.views[methodName](request, methodData.data, (err, result, cacheData) => {
+          if (err && config.options.serveStale && cacheData && !nocache) {
+            request.server.log(['hapi-views', 'fetch'], {err, message: `${methodName} returned an error. Serving stale content`});
+            err = null;
+          }
           out[methodData.type][methodData.key] = result;
           return mapDone(err, out);
         });
