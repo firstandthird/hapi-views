@@ -314,3 +314,108 @@ lab.experiment('methods with args', () => {
     });
   });
 });
+
+lab.experiment('method with view function', () => {
+  const server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' }
+  });
+  server.connection();
+  lab.before(start => {
+    // start server
+    server.register([
+      require('vision'),
+      {
+        register: require('../'),
+        options: {
+          //debug: true,
+          dataPath: `${process.cwd()}/test/yaml`,
+          views: {
+            '/apitest': {
+              view: 'api',
+              api: { var1: 'http://jsonplaceholder.typicode.com/posts?id=1' }
+            },
+            '/methodtest': {
+              view: 'method',
+              method: { var1: 'testerino' }
+            },
+            '/methodfunction': {
+              view: (data) => data.method.method1,
+              method: { method1: 'testerino' }
+            },
+            '/methodmulti': {
+              view: 'method',
+              method: {
+                var1: 'testerino',
+                var2: 'testmethod2',
+                var3: 'myScope.myMethod'
+              }
+            },
+            '/data': {
+              view: 'data',
+              yaml: { yaml1: 'test1.yaml' },
+              data: {
+                name: 'Jack',
+                url: '{request.url.path}',
+                test: {
+                  ok: '{yaml.yaml1.test1}'
+                }
+              }
+            },
+            '/data-string': {
+              view: 'data',
+              yaml: { yaml1: 'test1.yaml' },
+              data: 'yaml'
+            },
+            '/data-method': {
+              view: 'data',
+              yaml: { yaml1: 'test1.yaml' },
+              dataMethod: 'handle.data'
+            }
+          }
+        }
+      }], error => {
+      Hoek.assert(!error, error);
+
+      server.views({
+        engines: { html: require('handlebars') },
+        path: `${__dirname}/views`
+      });
+
+      server.route({
+        method: 'GET',
+        path: '/api',
+        handler(request, reply) {
+          reply({ test: true });
+        }
+      });
+
+      server.method('testerino', function(next) {
+        // this needs to return the name of the view:
+        next(null, 'method');
+      });
+
+      server.method('testmethod2', function(next) {
+        next(null, 'test2');
+      });
+
+      server.method('myScope.myMethod', function(next) {
+        next(null, 'test3');
+      });
+
+
+      server.start((err) => {
+        Hoek.assert(!err, err);
+        start();
+      });
+    });
+  });
+
+  lab.test('method', done => {
+    server.inject({
+      url: '/methodfunction'
+    }, response => {
+      expect(response.result).to.include('method');
+      done();
+    });
+  });
+});
