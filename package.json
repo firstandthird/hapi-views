@@ -30,7 +30,7 @@
     "hoek": "^5.0.0",
     "js-yaml": "^3.10.0",
     "str2fn": "2.0.0",
-    "varson": "^2.0.1",
+    "varson": "^2.0.2",
     "wreck": "^12.5.0"
   },
   "devDependencies": {
