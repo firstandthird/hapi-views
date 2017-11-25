@@ -10,16 +10,15 @@ const Boom = require('boom');
 
 lab.experiment('errors', () => {
   const server = new Hapi.Server({
-    debug: { log: 'hapi-views' }
+    debug: { log: 'hapi-views' },
+    port: 9991
   });
 
-  server.connection({ port: 9991 });
-
-  lab.before(start => {
-    server.register([
+  lab.before( async () => {
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
+        plugin: require('../'),
         options: {
           debug: true,
           views: {
@@ -37,64 +36,48 @@ lab.experiment('errors', () => {
             }
           }
         }
-      }], (error) => {
-      Hoek.assert(!error, error);
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
-      server.route({
-        method: 'GET',
-        path: '/api/500',
-        handler(request, reply) {
-          reply(new Error('testing'));
-        }
-      });
-      server.route({
-        method: 'GET',
-        path: '/api/404',
-        handler(request, reply) {
-          reply({ status: 'not found' }).code(404);
-        }
-      });
-      server.route({
-        method: 'GET',
-        path: '/api/401',
-        handler(request, reply) {
-          reply(Boom.unauthorized('nope bud'));
-        }
-      });
-      server.start((err) => {
-        Hoek.assert(!err, err);
-        start();
-      });
+      }
+    ]);
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
     });
+    server.route({
+      method: 'GET',
+      path: '/api/500',
+      handler(request, h) {
+        throw new Error('testing');
+      }
+    });
+    server.route({
+      method: 'GET',
+      path: '/api/404',
+      handler(request, h) {
+        return h.response({ status: 'not found' }).code(404);
+      }
+    });
+    server.route({
+      method: 'GET',
+      path: '/api/401',
+      handler(request, h) {
+        throw Boom.unauthorized('nope bud');
+      }
+    });
+    await server.start();
   });
 
-  lab.test('500 errors bubble back up', (done) => {
-    server.inject({
-      url: '/500'
-    }, (response) => {
-      expect(response.statusCode).to.equal(500);
-      done();
-    });
+  lab.test('500 errors bubble back up', async() => {
+    const response = await server.inject({ url: '/500' });
+    expect(response.statusCode).to.equal(500);
   });
 
-  lab.test('404 errors bubble back up', (done) => {
-    server.inject({
-      url: '/404'
-    }, (response) => {
-      expect(response.statusCode).to.equal(404);
-      done();
-    });
+  lab.test('404 errors bubble back up', async() => {
+    const response = await server.inject({ url: '/404' });
+    expect(response.statusCode).to.equal(404);
   });
 
-  lab.test('boom unauthorized errors bubble back up', (done) => {
-    server.inject({
-      url: '/401'
-    }, (response) => {
-      expect(response.statusCode).to.equal(401);
-      done();
-    });
+  lab.test('boom unauthorized errors bubble back up', async() => {
+    const response = await server.inject({ url: '/401' });
+    expect(response.statusCode).to.equal(401);
   });
 });

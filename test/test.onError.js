@@ -7,20 +7,20 @@ const expect = require('code').expect;
 const Hapi = require('hapi');
 
 lab.experiment('onError', () => {
-  lab.test('top-level onError', (done) => {
+  lab.test('top-level onError', async() => {
     const server = new Hapi.Server({
-      debug: { log: 'hapi-views' }
+      debug: { log: 'hapi-views' },
+      port: 9991
     });
-    server.connection({ port: 9991 });
-    server.method('makeError', (next) => next(new Error('this is an error')));
-    server.register([
+    server.method('makeError', () => { throw new Error('this is an error'); });
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
+        plugin: require('../'),
         options: {
-          onError: (err, reply) => {
+          onError: (err, h) => {
             expect(err).to.not.equal(null);
-            return reply('the error was handled');
+            return 'the error was handled';
           },
           debug: true,
           views: {
@@ -32,37 +32,32 @@ lab.experiment('onError', () => {
             }
           }
         }
-      }], (error) => {
-      Hoek.assert(!error, error);
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
+      }
+    ]);
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
     });
-    server.start(() => {
-      server.inject({
-        url: '/throwError'
-      }, (response) => {
-        expect(response.statusCode).to.equal(200);
-        expect(response.result).to.equal('the error was handled');
-        done();
-      });
-    });
+    await server.start();
+    const response = await server.inject({ url: '/throwError' });
+    expect(response.statusCode).to.equal(200);
+    expect(response.result).to.equal('the error was handled');
   });
-  lab.test('top-level onError as server method', (done) => {
+
+  lab.test('top-level onError as server method', async() => {
     const server = new Hapi.Server({
-      debug: { log: 'hapi-views' }
+      debug: { log: 'hapi-views' },
+      port: 9991
     });
-    server.connection({ port: 9991 });
     server.method('makeError', (next) => next(new Error('this is an error')));
-    server.method('fetchError', (err, reply) => {
+    server.method('fetchError', (err, h) => {
       expect(err).to.not.equal(null);
-      return reply('the error was handled');
+      return 'the error was handled';
     });
-    server.register([
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
+        plugin: require('../'),
         options: {
           onError: 'fetchError',
           debug: true,
@@ -75,33 +70,27 @@ lab.experiment('onError', () => {
             }
           }
         }
-      }], (error) => {
-      Hoek.assert(!error, error);
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
+      }
+    ]);
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
     });
-    server.start(() => {
-      server.inject({
-        url: '/throwError'
-      }, (response) => {
-        expect(response.statusCode).to.equal(200);
-        expect(response.result).to.equal('the error was handled');
-        done();
-      });
-    });
+    await server.start();
+    const response = await server.inject({ url: '/throwError' });
+    expect(response.statusCode).to.equal(200);
+    expect(response.result).to.equal('the error was handled');
   });
-  lab.test('per-route onError', (done) => {
+  lab.test('per-route onError', async() => {
     const server = new Hapi.Server({
-      debug: { log: 'hapi-views' }
+      debug: { log: 'hapi-views' },
+      port: 9991
     });
-    server.connection({ port: 9991 });
-    server.method('makeError', (next) => next(new Error('this is an error')));
-    server.register([
+    server.method('makeError', () => { throw new Error('this is an error'); });
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
+        plugin: require('../'),
         options: {
           // debug: true,
           views: {
@@ -117,37 +106,31 @@ lab.experiment('onError', () => {
             }
           }
         }
-      }], (error) => {
-      Hoek.assert(!error, error);
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
+      }
+    ]);
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
     });
-    server.start(() => {
-      server.inject({
-        url: '/throwError'
-      }, (response) => {
-        expect(response.statusCode).to.equal(200);
-        expect(response.result).to.equal('the error was handled');
-        done();
-      });
-    });
+    await server.start();
+    const response = await server.inject({ url: '/throwError' });
+    expect(response.statusCode).to.equal(200);
+    expect(response.result).to.equal('the error was handled');
   });
-  lab.test('per-route onError as server method', (done) => {
+  lab.test('per-route onError as server method', async() => {
     const server = new Hapi.Server({
-      debug: { log: 'hapi-views' }
+      debug: { log: 'hapi-views' },
+      port: 9991
     });
-    server.connection({ port: 9991 });
-    server.method('makeError', (next) => next(new Error('this is an error')));
-    server.method('fetchError', (err, reply) => {
+    server.method('makeError', () => { throw new Error('this is an error') });
+    server.method('fetchError', (err, h) => {
       expect(err).to.not.equal(null);
-      return reply('the error was handled');
+      return 'the error was handled';
     });
-    server.register([
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
+        plugin: require('../'),
         options: {
           debug: true,
           views: {
@@ -160,21 +143,16 @@ lab.experiment('onError', () => {
             }
           }
         }
-      }], (error) => {
-      Hoek.assert(!error, error);
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
+      }
+    ]);
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
     });
-    server.start(() => {
-      server.inject({
-        url: '/throwError'
-      }, (response) => {
-        expect(response.statusCode).to.equal(200);
-        expect(response.result).to.equal('the error was handled');
-        done();
-      });
-    });
+    await server.start();
+    const response = await server.inject({ url: '/throwError' });
+    expect(response.statusCode).to.equal(200);
+    expect(response.result).to.equal('the error was handled');
   });
+
 });

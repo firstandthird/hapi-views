@@ -7,17 +7,19 @@ const expect = require('code').expect;
 const Hapi = require('hapi');
 const boom = require('boom');
 
-lab.experiment('api', () => {
-  const server = new Hapi.Server({
-    debug: { request: '*', log: 'hapi-views' }
-  });
-  server.connection({ port: 9991 });
-  lab.before(start => {
+let server;
+lab.experiment('api', async () => {
+  lab.before( async () => {
     // start server
-    server.register([
+    server = new Hapi.Server({
+      debug: { request: '*', log: 'hapi-views' },
+      port: 9991
+    });
+
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
+        plugin: require('../'),
         options: {
           //debug: true,
           dataPath: `${process.cwd()}/test/yaml`,
@@ -63,130 +65,119 @@ lab.experiment('api', () => {
             },
           }
         }
-      }], error => {
-      Hoek.assert(!error, error);
+    }]);
 
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
-      server.route({
-        method: 'GET',
-        path: '/timeout',
-        handler(request, reply) {
-          setTimeout(() => reply({}), 6000);
-        }
-      });
-      server.route({
-        method: 'GET',
-        path: '/checkHeader',
-        handler(request, reply) {
-          expect(request.headers['x-api-key']).to.equal('1234');
-          return reply({ test: true });
-        }
-      });
-
-      server.route({
-        method: 'GET',
-        path: '/api',
-        handler(request, reply) {
-          expect(request.info.referrer).to.equal('refererWithTwoRs');
-          expect(request.headers).to.include('user-agent');
-          reply({ test: true });
-        }
-      });
-
-      server.route({
-        method: 'GET',
-        path: '/apiError',
-        handler(request, reply) {
-          reply(boom.locked('uh uh no'));
-        }
-      });
-
-      server.start((err) => {
-        Hoek.assert(!err, err);
-        start();
-      });
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
     });
+
+    server.route({
+      method: 'GET',
+      path: '/timeout',
+      handler: async(request, h) => {
+        const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+        await wait(6000);
+        return {};
+      }
+    });
+    server.route({
+      method: 'GET',
+      path: '/checkHeader',
+      handler(request, h) {
+        expect(request.headers['x-api-key']).to.equal('1234');
+        return { test: true };
+      }
+    });
+    server.route({
+      method: 'GET',
+      path: '/api',
+      handler(request, h) {
+        expect(request.info.referrer).to.equal('refererWithTwoRs');
+        expect(request.headers).to.include('user-agent');
+        return { test: true };
+      }
+    });
+    server.route({
+      method: 'GET',
+      path: '/apiError',
+      handler(request, h) {
+        throw boom.locked('uh uh no');
+      }
+    });
+    await server.start();
   });
-  lab.after(end => {
-    server.stop(end);
+
+  lab.after(async() => {
+    await server.stop();
   });
+
   // tests
-  lab.test('api with headers', done => {
-    server.inject({
+  lab.test('api with headers', async () => {
+    const response = await server.inject({
       method: 'GET',
       url: '/apiHeader/'
-    }, response => {
-      const context = response.request.response.source.context;
-      expect(context.api.var1.test).to.equal(true);
-      server.inject({
-        method: 'GET',
-        url: '/apiHeader2/'
-      }, response2 => {
-        const context2 = response2.request.response.source.context;
-        expect(context2.api.value1[0].id).to.equal(2);
-        expect(context2.api.value2.test).to.equal(true);
-        done();
-      });
     });
+    const context = response.request.response.source.context;
+    expect(context.api.var1.test).to.equal(true);
+    const response2 = await server.inject({
+      method: 'GET',
+      url: '/apiHeader2/'
+    });
+    const context2 = response2.request.response.source.context;
+    expect(context2.api.value1[0].id).to.equal(2);
+    expect(context2.api.value2.test).to.equal(true);
   });
-  lab.test('api', done => {
-    server.inject({
+
+
+  lab.test('api', async () => {
+    const response = await server.inject({
       url: '/apitest'
-    }, response => {
-      const context = response.request.response.source.context;
-      expect(context).to.equal({ yaml: {},
-        method: {},
-        inject: {},
-        api: {
-          key1: [{ userId: 1,
-            id: 1,
-            title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-            body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-          ]
-        }
-      });
-      done();
+    });
+    const context = response.request.response.source.context;
+    expect(context).to.equal({ yaml: {},
+      method: {},
+      inject: {},
+      api: {
+        key1: [{ userId: 1,
+          id: 1,
+          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+        ]
+      }
     });
   });
-  lab.test('api with timeout', { timeout: 10000 }, done => {
-    server.inject({
+  lab.test('api with timeout', { timeout: 10000 }, async () => {
+    const response = await server.inject({
       url: '/apitimeout'
-    }, response => {
-      expect(response.statusCode).to.equal(504);
-      done();
     });
+    expect(response.statusCode).to.equal(504);
   });
-  lab.test('api with variables', done => {
-    server.inject({
+
+  lab.test('api with variables', async () => {
+    const response = await server.inject({
       url: '/apivar/1'
-    }, response => {
-      const context = response.request.response.source.context;
-      expect(context).to.equal({ yaml: {},
-        method: {},
-        inject: {},
-        api: {
-          var1: [{ userId: 1,
-            id: 1,
-            title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-            body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-          ]
-        }
-      });
-      done();
+    });
+    const context = response.request.response.source.context;
+    expect(context).to.equal({ yaml: {},
+      method: {},
+      inject: {},
+      api: {
+        var1: [{ userId: 1,
+          id: 1,
+          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+        ]
+      }
     });
   });
-  lab.test('api friendly boom errors', done => {
-    server.inject({
+  lab.test('api friendly boom errors', async () => {
+    const response = await server.inject({
       url: '/apierror'
-    }, response => {
-      // verify boom status code and friendly error message:
-      expect(response.statusCode).to.equal(423);
-      expect(response.statusMessage).to.equal('Locked');
-      expect(response.payload).to.include('uh uh no');
-      done();
     });
+    // verify boom status code and friendly error message:
+    expect(response.statusCode).to.equal(423);
+    expect(response.statusMessage).to.equal('Locked');
+    expect(response.payload).to.include('uh uh no');
   });
 });

@@ -7,17 +7,16 @@ const Hoek = require('hoek');
 const expect = require('code').expect;
 const Hapi = require('hapi');
 
-lab.experiment('yaml', () => {
+lab.experiment('yaml', async() => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
   });
-  server.connection();
-  lab.before(start => {
+  lab.before( async() => {
     // start server
-    server.register([
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
+        plugin: require('../'),
         options: {
           //debug: true,
           dataPath: `${process.cwd()}/test/yaml`,
@@ -28,55 +27,46 @@ lab.experiment('yaml', () => {
             },
           }
         }
-      }], error => {
-      Hoek.assert(!error, error);
-
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
-
-      server.route({
-        method: 'GET',
-        path: '/api',
-        handler(request, reply) {
-          reply({ test: true });
-        }
-      });
-
-      server.method('testerino', function(next) {
-        next(null, 'test');
-      });
-
-      server.method('testmethod2', function(next) {
-        next(null, 'test2');
-      });
-
-      server.method('myScope.myMethod', function(next) {
-        next(null, 'test3');
-      });
-
-      server.start((err) => {
-        Hoek.assert(!err, err);
-        start();
-      });
+      }
+    ]);
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
     });
+
+    server.route({
+      method: 'GET',
+      path: '/api',
+      handler(request, h) {
+        return { test: true };
+      }
+    });
+
+    server.method('testerino', function() {
+      return 'test';
+    });
+
+    server.method('testmethod2', function() {
+      return 'test2';
+    });
+
+    server.method('myScope.myMethod', function() {
+      return 'test3';
+    });
+
+    await server.start();
   });
   // tests
-  lab.test('yaml', done => {
-    server.inject({
-      url: '/yaml'
-    }, response => {
-      const context = response.request.response.source.context;
-      expect(context).to.equal({
-        api: {},
-        method: {},
-        inject: {},
-        yaml: {
-          yaml1: { test1: 'true' }
-        }
-      });
-      done();
+  lab.test('yaml', async () => {
+    const response = await server.inject({ url: '/yaml' });
+    const context = response.request.response.source.context;
+    expect(context).to.equal({
+      api: {},
+      method: {},
+      inject: {},
+      yaml: {
+        yaml1: { test1: 'true' }
+      }
     });
   });
 });

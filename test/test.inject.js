@@ -8,17 +8,17 @@ const expect = require('code').expect;
 const Hapi = require('hapi');
 const EOL = require('os').EOL;
 const boom = require('boom');
+
 lab.experiment('injects', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
   });
-  server.connection();
-  lab.before(start => {
+  lab.before(async () => {
     // start server
-    server.register([
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
+        plugin: require('../'),
         options: {
           // debug: true,
           dataPath: `${process.cwd()}/test/yaml`,
@@ -44,118 +44,106 @@ lab.experiment('injects', () => {
             },
           }
         }
-      }], error => {
-      Hoek.assert(!error, error);
-
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
-
-      server.route({
-        method: 'GET',
-        path: '/api',
-        handler(request, reply) {
-          expect(request.info.referrer).to.equal('refererWithTwoRs');
-          expect(request.headers).to.include('user-agent');
-          return reply({ test: true });
-        }
-      });
-
-      server.method('testerino', function(next) {
-        next(null, 'test');
-      });
-
-      server.method('testmethod2', function(next) {
-        next(null, 'test2');
-      });
-
-      server.method('myScope.myMethod', function(next) {
-        next(null, 'test3');
-      });
-      server.route({
-        method: 'GET',
-        path: '/apiError',
-        handler(request, reply) {
-          reply(boom.locked('go away'));
-        }
-      });
-      server.start((err) => {
-        Hoek.assert(!err, err);
-        start();
-      });
+      }
+    ]);
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
     });
+
+    server.route({
+      method: 'GET',
+      path: '/api',
+      handler(request, reply) {
+        expect(request.info.referrer).to.equal('refererWithTwoRs');
+        expect(request.headers).to.include('user-agent');
+        return { test: true };
+      }
+    });
+
+    server.method('testerino', function() {
+      return 'test';
+    });
+
+    server.method('testmethod2', function() {
+      return 'test2';
+    });
+
+    server.method('myScope.myMethod', function() {
+      return 'test3';
+    });
+    server.route({
+      method: 'GET',
+      path: '/apiError',
+      handler(request, h) {
+        throw boom.locked('go away');
+      }
+    });
+    await server.start();
   });
+
   // tests
-  lab.test('inject', done => {
-    server.inject({
+  lab.test('inject', async () => {
+    const response = await server.inject({
       url: '/inject',
       headers: {
         referer: 'refererWithTwoRs'
       }
-    }, response => {
-      const context = response.request.response.source.context;
-      expect(context).to.equal({
-        yaml: {},
-        api: {},
-        method: {},
-        inject: { api: { test: true } }
-      });
-      done();
+    });
+    const context = response.request.response.source.context;
+    expect(context).to.equal({
+      yaml: {},
+      api: {},
+      method: {},
+      inject: { api: { test: true } }
     });
   });
-  lab.test('injecterr', done => {
-    server.inject({
+  lab.test('injecterr', async() => {
+    const response = await server.inject({
       url: '/injecterr',
       headers: {
         referer: 'refererWithTwoRs'
       }
-    }, response => {
-      // make sure error message and friendly error passed up:
-      expect(response.statusCode).to.equal(423);
-      expect(response.result.message).to.equal('go away');
-      done();
     });
+    // make sure error message and friendly error passed up:
+    expect(response.statusCode).to.equal(423);
+    expect(response.result.message).to.equal('go away');
   });
-  lab.test('injectmap', done => {
-    server.inject({
+  lab.test('injectmap', async () => {
+    const response = await server.inject({
       url: '/injectmap',
       headers: {
         referer: 'refererWithTwoRs'
       }
-    }, response => {
-      const context = response.request.response.source.context;
-      expect(context).to.equal({
-        yaml: {},
-        api: {},
-        method: {},
-        inject: {
-          api: { test: true },
-          apivar: `1${EOL}`
-        }
-      });
-      done();
+    });
+    const context = response.request.response.source.context;
+    expect(context).to.equal({
+      yaml: {},
+      api: {},
+      method: {},
+      inject: {
+        api: { test: true },
+        apivar: `1${EOL}`
+      }
     });
   });
-  lab.test('?json=1', done => {
-    server.inject({
+  lab.test('?json=1', async () => {
+    const response = await server.inject({
       url: '/injectmap?json=1',
       headers: {
         referer: 'refererWithTwoRs'
       }
-    }, response => {
-      expect(response.headers['content-type']).to.contain('application/json');
-      const context = response.result;
-      expect(context).to.equal({
-        yaml: {},
-        api: {},
-        method: {},
-        inject: {
-          api: { test: true },
-          apivar: `1${EOL}`
-        }
-      });
-      done();
+    });
+    expect(response.headers['content-type']).to.contain('application/json');
+    const context = response.result;
+    expect(context).to.equal({
+      yaml: {},
+      api: {},
+      method: {},
+      inject: {
+        api: { test: true },
+        apivar: `1${EOL}`
+      }
     });
   });
 });
@@ -164,13 +152,12 @@ lab.experiment('disable ?json=1', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
   });
-  server.connection();
-  lab.before(start => {
+  lab.before(async () => {
     // start server
-    server.register([
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
+        plugin: require('../'),
         options: {
           // debug: true,
           allowDebugQuery: false,
@@ -193,33 +180,24 @@ lab.experiment('disable ?json=1', () => {
             },
           }
         }
-      }], error => {
-      Hoek.assert(!error, error);
-
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
-      server.route({
-        method: 'GET',
-        path: '/api',
-        handler(request, reply) {
-          reply({ test: true });
-        }
-      });
-      server.start((err) => {
-        Hoek.assert(!err, err);
-        start();
-      });
+      }
+    ]);
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
     });
+    server.route({
+      method: 'GET',
+      path: '/api',
+      handler(request, h) {
+        return { test: true };
+      }
+    });
+    await server.start();
   });
   // tests
-  lab.test('inject', done => {
-    server.inject({
-      url: '/inject?json=1'
-    }, response => {
-      expect(response.headers['content-type']).to.contain('text/html');
-      done();
-    });
+  lab.test('inject', async () => {
+    const response = await server.inject({ url: '/inject?json=1' });
+    expect(response.headers['content-type']).to.contain('text/html');
   });
 });

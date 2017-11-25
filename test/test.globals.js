@@ -10,13 +10,12 @@ lab.experiment('globals', () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
   });
-  server.connection();
-  lab.before(start => {
+  lab.before( async() => {
     // start server
-    server.register([
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
+        plugin: require('../'),
         options: {
           dataPath: `${process.cwd()}/test/yaml`,
           views: {
@@ -36,51 +35,45 @@ lab.experiment('globals', () => {
             api: { var1: 'http://jsonplaceholder.typicode.com/posts?id=1' }
           }
         }
-      }], error => {
-      Hoek.assert(!error, error);
-      server.method('testmethod2', function(next) {
-        next(null, 'test2');
-      });
-      server.method('testerino', function(next) {
-        next(null, 'test');
-      });
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
-      server.route({
-        method: 'GET',
-        path: '/api',
-        handler(request, reply) {
-          reply({ yaml1: { test: true } });
-        }
-      });
-      start();
+      }
+    ]);
+    server.method('testmethod2', function() {
+      return 'test2';
+    });
+    server.method('testerino', function() {
+      return 'test';
+    });
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
+    });
+    server.route({
+      method: 'GET',
+      path: '/api',
+      handler(request, h) {
+        return { yaml1: { test: true } };
+      }
     });
   });
-  lab.test('global api', done => {
-    server.inject({
-      url: '/apivar/1'
-    }, response => {
-      const context = response.request.response.source.context;
-      // combines if they are arrays:
-      expect(context.method).to.equal({
-        method1: 'test2', method2: 'test'
-      });
-      expect(context.api).to.equal({ var1: [
-        { userId: 3,
-          id: 23,
-          title: 'maxime id vitae nihil numquam',
-          body: 'veritatis unde neque eligendi\nquae quod architecto quo neque vitae\nest illo sit tempora doloremque fugit quod\net et vel beatae sequi ullam sed tenetur perspiciatis'
-        }
-      ] });
-      expect(context.yaml).to.equal({
-        yaml1: {
-          global: 'much global',
-          test1: 'true'
-        }
-      });
-      done();
+  lab.test('global api', async () => {
+    const response = await server.inject({ url: '/apivar/1' });
+    const context = response.request.response.source.context;
+    // combines if they are arrays:
+    expect(context.method).to.equal({
+      method1: 'test2', method2: 'test'
+    });
+    expect(context.api).to.equal({ var1: [
+      { userId: 3,
+        id: 23,
+        title: 'maxime id vitae nihil numquam',
+        body: 'veritatis unde neque eligendi\nquae quod architecto quo neque vitae\nest illo sit tempora doloremque fugit quod\net et vel beatae sequi ullam sed tenetur perspiciatis'
+      }
+    ] });
+    expect(context.yaml).to.equal({
+      yaml1: {
+        global: 'much global',
+        test1: 'true'
+      }
     });
   });
 });

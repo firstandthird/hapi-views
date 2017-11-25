@@ -7,24 +7,60 @@ const expect = require('code').expect;
 const Hapi = require('hapi');
 
 lab.experiment('pre', () => {
-  lab.test('preProcess', (done) => {
+  lab.test('preProcess', async() => {
     let processRan = false;
 
     const server = new Hapi.Server({
-      debug: { log: 'hapi-views' }
+      debug: { log: 'hapi-views' },
+      port: 9991
     });
-    server.connection({ port: 9991 });
-    server.method('process', (request, options, reply, next) => {
+    server.method('process', (request, options, reply) => {
       processRan = true;
-      next();
     });
 
-    server.method('dummy', next => next());
+    server.method('dummy', () => '1');
 
-    server.register([
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
+        plugin: require('../'),
+        options: {
+          views: {
+            '/process': {
+              view: 'api',
+              preProcess: 'process',
+              method: {
+                dummy: 'dummy'
+              }
+            }
+          }
+        }
+      }
+    ]);
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
+    });
+    await server.start();
+    const response = await server.inject({ url: '/process' });
+    expect(response.statusCode).to.equal(200);
+    expect(processRan).to.equal(true);
+  });
+  lab.test('preProcess early reply', async() => {
+    const server = new Hapi.Server({
+      debug: { log: 'hapi-views' },
+      port: 9991
+    });
+    server.method('process', (request, options, reply) => {
+      return { test: 2 };
+    });
+
+    server.method('dummy', () => '1');
+
+    await server.register([
+      require('vision'),
+      {
+        plugin: require('../'),
         options: {
           views: {
             '/process': {
@@ -43,75 +79,26 @@ lab.experiment('pre', () => {
         path: `${__dirname}/views`
       });
     });
-    server.start(() => {
-      server.inject({
-        url: '/process'
-      }, (response) => {
-        expect(response.statusCode).to.equal(200);
-        expect(processRan).to.equal(true);
-        done();
-      });
-    });
+    await server.start();
+    const response = await server.inject({ url: '/process' });
+    expect(response.statusCode).to.equal(200);
+    expect(response.result.test).to.equal(2);
   });
-  lab.test('preProcess early reply', (done) => {
+  lab.test('preResponse', async() => {
     const server = new Hapi.Server({
-      debug: { log: 'hapi-views' }
+      debug: { log: 'hapi-views' },
+      port: 9991
     });
-    server.connection({ port: 9991 });
-    server.method('process', (request, options, reply, next) => {
-      reply({ test: 2 });
-      next(null, true);
+    server.method('response', (request, options, data) => {
+      return { test: 1 };
     });
 
-    server.method('dummy', next => next());
+    server.method('dummy', () => '1');
 
-    server.register([
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
-        options: {
-          views: {
-            '/process': {
-              view: 'api',
-              preProcess: 'process',
-              method: {
-                dummy: 'dummy'
-              }
-            }
-          }
-        }
-      }], (error) => {
-      Hoek.assert(!error, error);
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
-    });
-    server.start(() => {
-      server.inject({
-        url: '/process'
-      }, (response) => {
-        expect(response.statusCode).to.equal(200);
-        expect(response.result.test).to.equal(2);
-        done();
-      });
-    });
-  });
-  lab.test('preResponse', (done) => {
-    const server = new Hapi.Server({
-      debug: { log: 'hapi-views' }
-    });
-    server.connection({ port: 9991 });
-    server.method('response', (request, options, data, reply) => {
-      reply({ test: 1 });
-    });
-
-    server.method('dummy', next => next());
-
-    server.register([
-      require('vision'),
-      {
-        register: require('../'),
+        plugin: require('../'),
         options: {
           views: {
             '/response': {
@@ -123,21 +110,15 @@ lab.experiment('pre', () => {
             }
           }
         }
-      }], (error) => {
-      Hoek.assert(!error, error);
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
+      }
+    ]);
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
     });
-    server.start(() => {
-      server.inject({
-        url: '/response'
-      }, (response) => {
-        expect(response.statusCode).to.equal(200);
-        expect(response.result.test).to.equal(1);
-        done();
-      });
-    });
+    await server.start();
+    const response = await server.inject({ url: '/response' });
+    expect(response.statusCode).to.equal(200);
+    expect(response.result.test).to.equal(1);
   });
 });

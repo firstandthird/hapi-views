@@ -7,19 +7,20 @@ const expect = require('code').expect;
 const Hapi = require('hapi');
 const Boom = require('boom');
 
+let server;
 lab.experiment('api', () => {
-  const server = new Hapi.Server({
-    debug: { request: '*', log: 'hapi-views' }
+  server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' },
+    port: 9991
   });
-  server.connection({ port: 9991 });
   let callCount = 0;
 
-  lab.before(start => {
+  lab.before( async () => {
     // start server
-    server.register([
+    await server.register([
       require('vision'),
       {
-        register: require('../'),
+        plugin: require('../'),
         options: {
           //debug: true,
           enableCache: true,
@@ -68,239 +69,203 @@ lab.experiment('api', () => {
             },
           }
         }
-      }], error => {
-      Hoek.assert(!error, error);
-
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
-
-      server.start((err) => {
-        Hoek.assert(!err, err);
-        start();
-      });
+    }]);
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
     });
+    await server.start();
   });
-  lab.after(end => {
-    server.stop(end);
+  lab.after(async () => {
+    await server.stop();
   });
 
-  lab.test('api', done => {
+  lab.test('api', async () => {
     let callCount = 0;
     server.route({
       method: 'GET',
       path: '/testRoute',
-      handler(request, reply) {
+      handler(request, h) {
         callCount ++;
-        reply({ test: true });
+        return { test: true };
       }
     });
     server.route({
       method: 'GET',
       path: '/testRoute2',
-      handler(request, reply) {
-        reply({ test2: '1' });
+      handler(request, h) {
+        return { test2: '1' };
       }
     });
-    server.inject({
+    const response = await server.inject({
       url: '/apitest'
-    }, response => {
-      const context = response.request.response.source.context;
-      expect(context.api.key1).to.equal({ test: true });
-      server.inject({
-        url: '/apitest'
-      }, response2 => {
-        const context2 = response.request.response.source.context;
-        expect(context2.api.key1).to.equal({ test: true });
-        expect(context2.api.key2).to.equal({ test2: '1' });
-        expect(callCount).to.equal(1);
-        done();
-      });
     });
+    const context = response.request.response.source.context;
+    expect(context.api.key1).to.equal({ test: true });
+    const response2 = await server.inject({
+      url: '/apitest'
+    });
+    const context2 = response.request.response.source.context;
+    expect(context2.api.key1).to.equal({ test: true });
+    expect(context2.api.key2).to.equal({ test2: '1' });
+    expect(callCount).to.equal(1);
   });
 
-  lab.test('api with route params', done => {
+  lab.test('api with route params', async () => {
     callCount = 0;
     const ids = [];
     server.route({
       method: 'GET',
       path: '/checkUrl/{requestId}',
-      handler(request, reply) {
+      handler(request, h) {
         callCount ++;
         ids.push(request.params.requestId);
-        reply({ test: true });
+        return { test: true };
       }
     });
-    server.inject({
+    const response = await server.inject({ url: '/apiParams/' });
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms)); await wait(1000);
+    const response2 = await server.inject({
       url: '/apiParams/'
-    }, response => {
-      setTimeout(() => {
-        server.inject({
-          url: '/apiParams/'
-        }, response2 => {
-          expect(callCount).to.equal(2);
-          expect(ids[0]).to.not.equal(ids[1]);
-          done();
-        });
-      }, 1000);
     });
+    expect(callCount).to.equal(2);
+    expect(ids[0]).to.not.equal(ids[1]);
   });
 
-  lab.test('api with cache disabled', done => {
+  lab.test('api with cache disabled', async () => {
     let callCount = 0;
     server.route({
       method: 'GET',
       path: '/testRouteNoCache',
-      handler(request, reply) {
+      handler(request, h) {
         callCount ++;
-        reply({ test: true });
+        return { test: true };
       }
     });
-    server.inject({
+    const response = await server.inject({
       url: '/apitestNocache'
-    }, response => {
-      const context = response.request.response.source.context;
-      expect(context.api.key1).to.equal({ test: true });
-      server.inject({
-        url: '/apitestNocache'
-      }, response2 => {
-        const context2 = response.request.response.source.context;
-        expect(context2.api.key1).to.equal({ test: true });
-        expect(callCount).to.equal(2);
-        done();
-      });
     });
+    const context = response.request.response.source.context;
+    expect(context.api.key1).to.equal({ test: true });
+    const response2 = await server.inject({
+      url: '/apitestNocache'
+    });
+    const context2 = response.request.response.source.context;
+    expect(context2.api.key1).to.equal({ test: true });
+    expect(callCount).to.equal(2);
   });
 
-  lab.test('nocache=1 will bypass caching', done => {
-    server.inject({
+  lab.test('nocache=1 will bypass caching', async() => {
+    const respnose = await server.inject({
       url: '/apitest?nocache=1'
-    }, response => {
-      const context = response.request.response.source.context;
-      expect(context.api.key1).to.equal({ test: true });
-      server.inject({
-        url: '/apitest?nocache=1'
-      }, response2 => {
-        const context2 = response.request.response.source.context;
-        expect(context2.api.key1).to.equal({ test: true });
-        expect(context2.api.key2).to.equal({ test2: '1' });
-        expect(callCount).to.equal(2);
-        done();
-      });
     });
+    const context = response.request.response.source.context;
+    expect(context.api.key1).to.equal({ test: true });
+    const response2 = await server.inject({
+      url: '/apitest?nocache=1'
+    });
+    const context2 = response.request.response.source.context;
+    expect(context2.api.key1).to.equal({ test: true });
+    expect(context2.api.key2).to.equal({ test2: '1' });
+    expect(callCount).to.equal(2);
   });
 
-  lab.test('api test with api fail', { timeout: 3500 }, done => {
+  lab.test('api test with api fail', { timeout: 3500 }, async () => {
     let firstRun = true;
     server.route({
       method: 'GET',
       path: '/testFailRoute',
       handler(req, reply) {
         if (!firstRun) {
-          return reply(Boom.badImplementation('Random Error Message'));
+          throw Boom.badImplementation('Random Error Message');
         }
 
         firstRun = false;
-        reply({ one: 'une', two: 'deu' });
+        return { one: 'une', two: 'deu' };
       }
     });
-    server.inject({
+    const resp = await server.inject({
       method: 'GET',
       url: '/apitestfail'
-    }, resp => {
-      const context = resp.request.response.source.context;
-      expect(context.api.key1).to.equal({ one: 'une', two: 'deu' });
-      setTimeout(() => {
-        server.inject({
-          method: 'GET',
-          url: '/apitestfail'
-        }, resp2 => {
-          const contextDeu = resp2.request.response.source.context;
-          expect(contextDeu.api.key1).to.equal({ one: 'une', two: 'deu' });
-          done();
-        });
-      }, 3000);
     });
+    const context = resp.request.response.source.context;
+    expect(context.api.key1).to.equal({ one: 'une', two: 'deu' });
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms)); await wait(3000);
+    const resp2 = await server.inject({
+      method: 'GET',
+      url: '/apitestfail'
+    });
+    const contextDeu = resp2.request.response.source.context;
+    expect(contextDeu.api.key1).to.equal({ one: 'une', two: 'deu' });
   });
 
-  lab.test('inject', done => {
+  lab.test('inject', async () => {
     callCount = 0;
     server.route({
       method: 'GET',
       path: '/injectRoute',
-      handler(request, reply) {
+      handler(request, h) {
         callCount ++;
-        reply({ test: true });
+        return { test: true };
       }
     });
-    server.inject({
+    const response = await server.inject({
       method: 'GET',
       url: '/injecttest'
-    }, response => {
-      const context = response.request.response.source.context;
-      expect(context.inject.var1).to.equal({ test: true });
-      server.inject({
-        url: '/injecttest'
-      }, response2 => {
-        const context2 = response.request.response.source.context;
-        expect(context2.inject.var1).to.equal({ test: true });
-        expect(callCount).to.equal(1);
-        done();
-      });
     });
+    const context = response.request.response.source.context;
+    expect(context.inject.var1).to.equal({ test: true });
+    const response2 = await server.inject({
+      url: '/injecttest'
+    });
+    const context2 = response.request.response.source.context;
+    expect(context2.inject.var1).to.equal({ test: true });
+    expect(callCount).to.equal(1);
   });
 
-  lab.test('inject with cache disabled', done => {
+  lab.test('inject with cache disabled', async () => {
     callCount = 0;
     server.route({
       method: 'GET',
       path: '/testInjectNoCache',
-      handler(request, reply) {
+      handler(request, h) {
         callCount ++;
-        reply({ test: true });
+        return { test: true };
       }
     });
-    server.inject({
+    const response = await server.inject({
       url: '/injecttestNocache'
-    }, response => {
-      const context = response.request.response.source.context;
-      expect(context.inject.key1).to.equal({ test: true });
-      server.inject({
-        url: '/injecttestNocache'
-      }, response2 => {
-        const context2 = response.request.response.source.context;
-        expect(context2.inject.key1).to.equal({ test: true });
-        expect(callCount).to.equal(2);
-        done();
-      });
     });
+    const context = response.request.response.source.context;
+    expect(context.inject.key1).to.equal({ test: true });
+    const response2 = await server.inject({
+      url: '/injecttestNocache'
+    });
+    const context2 = response.request.response.source.context;
+    expect(context2.inject.key1).to.equal({ test: true });
+    expect(callCount).to.equal(2);
   });
 
-  lab.test('inject with route params', done => {
+  lab.test('inject with route params', async () => {
     callCount = 0;
     const ids = [];
     server.route({
       method: 'GET',
       path: '/checkUrlInject/{requestId}',
-      handler(request, reply) {
+      handler(request, h) {
         callCount ++;
         ids.push(request.params.requestId);
-        reply({ test: true });
+        return { test: true };
       }
     });
-    server.inject({
+    const response = await server.inject({
       url: '/injectParams/'
-    }, response => {
-      setTimeout(() => {
-        server.inject({
-          url: '/injectParams/'
-        }, response2 => {
-          expect(callCount).to.equal(2);
-          expect(ids[0]).to.not.equal(ids[1]);
-          done();
-        });
-      }, 1000);
     });
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms)); await wait(1000);
+    const response2 = await server.inject({
+      url: '/injectParams/'
+    });
+    expect(callCount).to.equal(2);
+    expect(ids[0]).to.not.equal(ids[1]);
   });
 });

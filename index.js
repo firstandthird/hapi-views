@@ -14,7 +14,7 @@ const defaults = {
   views: {}
 };
 
-exports.register = function(server, options, next) {
+const register = async (server, options) => {
   options = hoek.applyToDefaults(defaults, options);
   serverMethods.forEach((methodName) => {
     // todo: add caching options:
@@ -50,20 +50,22 @@ exports.register = function(server, options, next) {
   // register the fetch method:
   server.method('views.fetch', require('./methods/views/fetch.js'), {});
   //routes
-  async.forEachOfSeries(options.views, (config, path, cb) => {
-    config.options = options;
-    server.route({
-      path,
-      method: 'get',
-      handler: renderHandler(config),
-      config: aug({}, options.routeConfig, config.routeConfig || {})
-    });
-
-    cb();
-  }, next);
+  await new Promise((resolve, reject) => {
+    async.forEachOfSeries(options.views, (config, path, cb) => {
+      config.options = options;
+      server.route({
+        path,
+        method: 'get',
+        handler: renderHandler(config),
+        config: aug({}, options.routeConfig, config.routeConfig || {})
+      });
+      cb();
+    }, resolve);
+  });
 };
 
-exports.register.attributes = {
-  name: 'views',
+exports.plugin = {
+  register,
+  once: true,
   pkg: require('./package.json')
 };

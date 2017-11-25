@@ -35,14 +35,14 @@
     "wreck": "^12.5.0"
   },
   "devDependencies": {
-    "code": "^4.0.0",
+    "code": "^5.1.2",
     "coveralls": "^2.11.8",
     "eslint": "^4.9.0",
     "eslint-config-firstandthird": "^4.0.1",
     "eslint-plugin-import": "^2.8.0",
     "handlebars": "^4.0.11",
-    "hapi": "^16.6.2",
-    "lab": "^12.1.0",
-    "vision": "^4.0.1"
+    "hapi": "^17.0.1",
+    "lab": "^15.1.2",
+    "vision": "^5.2.0"
   }
 }

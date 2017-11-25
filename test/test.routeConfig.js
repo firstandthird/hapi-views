@@ -7,25 +7,22 @@ const Hapi = require('hapi');
 
 
 let server;
-lab.experiment('global routeConfig', () => {
-  lab.beforeEach((done) => {
+lab.experiment('global routeConfig', async() => {
+  lab.beforeEach(async() => {
     server = new Hapi.Server();
-    server.connection();
-    server.register(require('vision'), () => {
-      server.views({
-        engines: { html: require('handlebars') },
-        path: `${__dirname}/views`
-      });
-      done();
+    await server.register(require('vision'));
+    server.views({
+      engines: { html: require('handlebars') },
+      path: `${__dirname}/views`
     });
   });
-  lab.afterEach((done) => {
-    server.stop(done);
+  lab.afterEach(async() => {
+    await server.stop();
   });
 
-  lab.test('global route config merges with local route config', (done) => {
-    server.register({
-      register: require('../'),
+  lab.test('global route config merges with local route config', async() => {
+    await server.register({
+      plugin: require('../'),
       options: {
         routeConfig: {
           cache: {
@@ -39,19 +36,15 @@ lab.experiment('global routeConfig', () => {
           }
         }
       }
-    }, (err) => {
-      expect(err).to.not.exist();
-      server.inject('/', (res) => {
-        expect(res.statusCode).to.equal(200);
-        expect(res.headers['cache-control']).to.equal('max-age=1, must-revalidate, public');
-        done();
-      });
     });
+    const res = await server.inject('/');
+    expect(res.statusCode).to.equal(200);
+    expect(res.headers['cache-control']).to.equal('max-age=1, must-revalidate, public');
   });
 
-  lab.test('not setting global route Config', (done) => {
-    server.register({
-      register: require('../'),
+  lab.test('not setting global route Config', async() => {
+    await server.register({
+      plugin: require('../'),
       options: {
         views: {
           '/': {
@@ -59,19 +52,15 @@ lab.experiment('global routeConfig', () => {
           }
         }
       }
-    }, (err) => {
-      expect(err).to.not.exist();
-      server.inject('/', (res) => {
-        expect(res.statusCode).to.equal(200);
-        expect(res.headers['cache-control']).to.equal('no-cache');
-        done();
-      });
     });
+    const res = await server.inject('/');
+    expect(res.statusCode).to.equal(200);
+    expect(res.headers['cache-control']).to.equal('no-cache');
   });
 
-  lab.test('not setting global route Config', (done) => {
-    server.register({
-      register: require('../'),
+  lab.test('not setting global route Config', async() => {
+    await server.register({
+      plugin: require('../'),
       options: {
         routeConfig: {
           cache: {
@@ -90,13 +79,9 @@ lab.experiment('global routeConfig', () => {
           }
         }
       }
-    }, (err) => {
-      expect(err).to.not.exist();
-      server.inject('/', (res) => {
-        expect(res.statusCode).to.equal(200);
-        expect(res.headers['cache-control']).to.equal('max-age=2, must-revalidate, public');
-        done();
-      });
     });
+    const res = await server.inject('/');
+    expect(res.statusCode).to.equal(200);
+    expect(res.headers['cache-control']).to.equal('max-age=2, must-revalidate, public');
   });
 });
