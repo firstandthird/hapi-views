@@ -20,11 +20,13 @@ lab.experiment('yaml', async() => {
         options: {
           //debug: true,
           dataPath: `${process.cwd()}/test/yaml`,
-          views: {
-            '/yaml': {
-              view: 'yaml',
-              yaml: { yaml1: 'test1.yaml' }
-            },
+          routes: {
+          	'/yaml': {
+          		view: 'yaml',
+          		data: {
+                yaml1: "{{methods.yaml(`${process.cwd()}/test/yaml/test1.yaml`)}}",
+              }
+            }
           }
         }
       }
@@ -34,39 +36,12 @@ lab.experiment('yaml', async() => {
       path: `${__dirname}/views`
     });
 
-    server.route({
-      method: 'GET',
-      path: '/api',
-      handler(request, h) {
-        return { test: true };
-      }
-    });
-
-    server.method('testerino', function() {
-      return 'test';
-    });
-
-    server.method('testmethod2', function() {
-      return 'test2';
-    });
-
-    server.method('myScope.myMethod', function() {
-      return 'test3';
-    });
-
     await server.start();
   });
   // tests
   lab.test('yaml', async () => {
     const response = await server.inject({ url: '/yaml' });
     const context = response.request.response.source.context;
-    expect(context).to.equal({
-      api: {},
-      method: {},
-      inject: {},
-      yaml: {
-        yaml1: { test1: 'true' }
-      }
-    });
+    expect(context).to.equal({ yaml1: { test1: true } });
   });
 });

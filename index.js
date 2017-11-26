@@ -16,6 +16,7 @@ const defaults = {
 
 const register = async (server, options) => {
   options = hoek.applyToDefaults(defaults, options);
+  /*
   serverMethods.forEach((methodName) => {
     // todo: add caching options:
     const methodOptions = {};
@@ -49,9 +50,11 @@ const register = async (server, options) => {
   });
   // register the fetch method:
   server.method('views.fetch', require('./methods/views/fetch.js'), {});
+  */
+  server.method('yaml', require('./methods/views/yaml.js'));
   //routes
   await new Promise((resolve, reject) => {
-    async.forEachOfSeries(options.views, (config, path, cb) => {
+    async.forEachOfSeries(options.routes, (config, path, cb) => {
       config.options = options;
       server.route({
         path,
