@@ -23,50 +23,38 @@ lab.experiment('api', async () => {
         options: {
           //debug: true,
           dataPath: `${process.cwd()}/test/yaml`,
-          views: {
+          routes: {
             '/apitest': {
               view: 'api',
-              api: { key1: 'http://jsonplaceholder.typicode.com/posts?id=1' }
+              data: { key1: "{{methods.api(request, 'http://jsonplaceholder.typicode.com/posts?id=1')}}" }
             },
             '/apitimeout': {
               view: 'api',
-              api: { key1: 'http://localhost:9991/timeout' }
+              data: { key1: "{{methods.api('http://localhost:9991/timeout')}}" }
             },
             '/apierror': {
               view: 'api',
-              api: { key1: 'http://localhost:9991/apiError' }
+              data: { key1: "{{methods.api('http://localhost:9991/apiError')}}" }
             },
             '/apivar/{id}': {
               view: 'api',
-              api: { var1: 'http://jsonplaceholder.typicode.com/posts?id={params.id}' }
+              data: { var1: "{{methods.api('http://jsonplaceholder.typicode.com/posts?id={params.id}')}}" }
             },
             '/apiHeader/': {
               view: 'api',
-              api: {
-                var1: {
-                  url: 'http://localhost:9991/checkHeader',
-                  headers: {
-                    'x-api-key': '1234'
-                  }
-                }
-              }
+              data: { var1: "{{methods.api({ url: 'http://localhost:9991/checkHeader', headers: { 'x-api-key': '1234' } })}}" }
             },
             '/apiHeader2/': {
               view: 'api',
-              api: {
-                value1: 'http://jsonplaceholder.typicode.com/posts?id=2',
-                value2: {
-                  url: 'http://localhost:9991/checkHeader',
-                  headers: {
-                    'x-api-key': '1234'
-                  }
-                }
+              data: {
+                value1: "{{methods.api(http://jsonplaceholder.typicode.com/posts?id=2')}}",
+                value2: "{{methods.api({ url: 'http://localhost:9991/checkHeader', headers: { 'x-api-key': '1234' } }) }}"
               }
-            },
+            }
           }
         }
-    }]);
-
+      }
+    ]);
     server.views({
       engines: { html: require('handlebars') },
       path: `${__dirname}/views`
@@ -129,7 +117,7 @@ lab.experiment('api', async () => {
     expect(context2.api.value2.test).to.equal(true);
   });
 
-
+/*
   lab.test('api', async () => {
     const response = await server.inject({
       url: '/apitest'
@@ -139,7 +127,7 @@ lab.experiment('api', async () => {
       method: {},
       inject: {},
       api: {
-        key1: [{ userId: 1,
+        data: { key1: [{ userId: 1,
           id: 1,
           title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
           body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
@@ -180,4 +168,5 @@ lab.experiment('api', async () => {
     expect(response.statusMessage).to.equal('Locked');
     expect(response.payload).to.include('uh uh no');
   });
+*/
 });

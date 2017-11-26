@@ -52,6 +52,7 @@ const register = async (server, options) => {
   server.method('views.fetch', require('./methods/views/fetch.js'), {});
   */
   server.method('yaml', require('./methods/views/yaml.js'));
+  server.method('api', require('./methods/views/api.js'));
   //routes
   await new Promise((resolve, reject) => {
     async.forEachOfSeries(options.routes, (config, path, cb) => {
