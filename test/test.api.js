@@ -30,25 +30,27 @@ lab.experiment('api', async () => {
             },
             '/apitimeout': {
               view: 'api',
-              data: { key1: "{{methods.api('http://localhost:9991/timeout')}}" }
+              data: { key1: "{{methods.api(request, 'http://localhost:9991/timeout')}}" }
             },
             '/apierror': {
               view: 'api',
-              data: { key1: "{{methods.api('http://localhost:9991/apiError')}}" }
+              data: { key1: "{{methods.api(request, 'http://localhost:9991/apiError')}}" }
             },
             '/apivar/{id}': {
               view: 'api',
-              data: { var1: "{{methods.api('http://jsonplaceholder.typicode.com/posts?id={params.id}')}}" }
+              data: { var1: "{{methods.api(request, 'http://jsonplaceholder.typicode.com/posts?id={params.id}')}}" }
             },
             '/apiHeader/': {
               view: 'api',
-              data: { var1: "{{methods.api({ url: 'http://localhost:9991/checkHeader', headers: { 'x-api-key': '1234' } })}}" }
+              data: {
+                var1: "{{methods.api(request, { url: 'http://localhost:9991/checkHeader', headers: { 'x-api-key': '1234' } })}}"
+              }
             },
             '/apiHeader2/': {
               view: 'api',
               data: {
-                value1: "{{methods.api(http://jsonplaceholder.typicode.com/posts?id=2')}}",
-                value2: "{{methods.api({ url: 'http://localhost:9991/checkHeader', headers: { 'x-api-key': '1234' } }) }}"
+                value1: "{{methods.api(request, 'http://jsonplaceholder.typicode.com/posts?id=2')}}",
+                value2: "{{methods.api(request, { url: 'http://localhost:9991/checkHeader', headers: { 'x-api-key': '1234' } }) }}"
               }
             }
           }
@@ -107,14 +109,14 @@ lab.experiment('api', async () => {
       url: '/apiHeader/'
     });
     const context = response.request.response.source.context;
-    expect(context.api.var1.test).to.equal(true);
+    expect(context.var1.test).to.equal(true);
     const response2 = await server.inject({
       method: 'GET',
       url: '/apiHeader2/'
     });
     const context2 = response2.request.response.source.context;
-    expect(context2.api.value1[0].id).to.equal(2);
-    expect(context2.api.value2.test).to.equal(true);
+    expect(context2.value1[0].id).to.equal(2);
+    expect(context2.value2.test).to.equal(true);
   });
 
 /*
