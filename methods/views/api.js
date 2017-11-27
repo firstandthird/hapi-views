@@ -19,7 +19,7 @@ module.exports = async (request, api) => {
     try {
       const { res, payload } = await wreck.get(url, options);
       if (res.statusCode !== 200) {
-        return resolve(Boom.create(res.statusCode, payload.message || res.statusMessage));
+        return reject(Boom.create(res.statusCode, payload.message || res.statusMessage));
       }
       return resolve(payload);
     } catch (err) {

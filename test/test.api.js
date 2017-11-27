@@ -38,7 +38,9 @@ lab.experiment('api', async () => {
             },
             '/apivar/{id}': {
               view: 'api',
-              data: { var1: "{{methods.api(request, 'http://jsonplaceholder.typicode.com/posts?id={params.id}')}}" }
+              data: {
+                var1: "{{methods.api(request, 'http://jsonplaceholder.typicode.com/posts?id={{request.params.id}}')}}"
+              }
             },
             '/apiHeader/': {
               view: 'api',
@@ -119,24 +121,20 @@ lab.experiment('api', async () => {
     expect(context2.value2.test).to.equal(true);
   });
 
-/*
   lab.test('api', async () => {
     const response = await server.inject({
       url: '/apitest'
     });
     const context = response.request.response.source.context;
-    expect(context).to.equal({ yaml: {},
-      method: {},
-      inject: {},
-      api: {
-        data: { key1: [{ userId: 1,
-          id: 1,
-          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-        ]
-      }
+    expect(context).to.equal({
+     key1: [{ userId: 1,
+        id: 1,
+        title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+        body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+      ]
     });
   });
+
   lab.test('api with timeout', { timeout: 10000 }, async () => {
     const response = await server.inject({
       url: '/apitimeout'
@@ -145,30 +143,23 @@ lab.experiment('api', async () => {
   });
 
   lab.test('api with variables', async () => {
-    const response = await server.inject({
-      url: '/apivar/1'
-    });
+    const response = await server.inject({ url: '/apivar/1' });
     const context = response.request.response.source.context;
-    expect(context).to.equal({ yaml: {},
-      method: {},
-      inject: {},
-      api: {
-        var1: [{ userId: 1,
-          id: 1,
-          title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-          body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
-        ]
-      }
+    console.log(context)
+    expect(context).to.equal({
+      var1: [{ userId: 1,
+        id: 1,
+        title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+        body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto' }
+      ]
     });
   });
+
   lab.test('api friendly boom errors', async () => {
-    const response = await server.inject({
-      url: '/apierror'
-    });
+    const response = await server.inject({ url: '/apierror' });
     // verify boom status code and friendly error message:
     expect(response.statusCode).to.equal(423);
     expect(response.statusMessage).to.equal('Locked');
     expect(response.payload).to.include('uh uh no');
   });
-*/
 });
