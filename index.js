@@ -1,6 +1,5 @@
 'use strict';
 /* eslint new-cap: 0 */
-const async = require('async');
 const hoek = require('hoek');
 const aug = require('aug');
 const renderHandler = require('./lib/handler.js');
@@ -14,9 +13,9 @@ const defaults = {
 };
 
 const register = async (server, options) => {
-  options = hoek.applyToDefaults(defaults, options);
-  //routes
-  async.forEachOfSeries(options.routes, (config, path, cb) => {
+  options = Object.assign({}, defaults, options);
+  Object.keys(options.routes).forEach((path) => {
+    const config = options.routes[path];
     config.options = options;
     server.route({
       path,
@@ -24,7 +23,6 @@ const register = async (server, options) => {
       handler: renderHandler(config),
       config: aug({}, options.routeConfig, config.routeConfig || {})
     });
-    cb();
   });
 };
 

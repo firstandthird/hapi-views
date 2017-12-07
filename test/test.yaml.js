@@ -21,9 +21,9 @@ lab.experiment('yaml', async() => {
           //debug: true,
           dataPath: `${process.cwd()}/test/yaml`,
           routes: {
-          	'/yaml': {
-          		view: 'yaml',
-          		data: {
+            '/yaml': {
+              view: 'yaml',
+              data: {
                 yaml1: "{{methods.yaml(`${process.cwd()}/test/yaml/test1.yaml`)}}",
               }
             }
@@ -35,7 +35,9 @@ lab.experiment('yaml', async() => {
       engines: { html: require('handlebars') },
       path: `${__dirname}/views`
     });
-
+    server.method('yaml', (request, yamlFile) => {
+      return { yaml1: { test1: true } };
+    });
     await server.start();
   });
   // tests

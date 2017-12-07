@@ -25,13 +25,10 @@ lab.experiment('pre', () => {
       {
         plugin: require('../'),
         options: {
-          views: {
+          routes: {
             '/process': {
               view: 'api',
-              preProcess: 'process',
-              method: {
-                dummy: 'dummy'
-              }
+              preProcess: 'process'
             }
           }
         }
@@ -62,7 +59,7 @@ lab.experiment('pre', () => {
       {
         plugin: require('../'),
         options: {
-          views: {
+          routes: {
             '/process': {
               view: 'api',
               preProcess: 'process',
@@ -100,7 +97,7 @@ lab.experiment('pre', () => {
       {
         plugin: require('../'),
         options: {
-          views: {
+          routes: {
             '/response': {
               view: 'api',
               preResponse: 'response',
