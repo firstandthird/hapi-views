@@ -1,6 +1,5 @@
 'use strict';
 /* eslint new-cap: 0 */
-const hoek = require('hoek');
 const aug = require('aug');
 const renderHandler = require('./lib/handler.js');
 const defaults = {

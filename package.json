@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
-    "test": "lab -t 100 -v",
+    "test": "lab --leaks",
     "test-travis": "lab -r lcov | ./node_modules/.bin/coveralls"
   },
   "repository": {
@@ -26,7 +26,6 @@
   "dependencies": {
     "aug": "^2.0.0",
     "boom": "^6.0.0",
-    "hoek": "^5.0.0",
     "p-props": "^1.1.0",
     "varson": "^2.0.2"
   },
