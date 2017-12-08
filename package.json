@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
-    "test": "lab -t 100 -v",
+    "test": "lab --leaks",
     "test-travis": "lab -r lcov | ./node_modules/.bin/coveralls"
   },
   "repository": {
@@ -24,24 +24,20 @@
   },
   "homepage": "https://github.com/firstandthird/hapi-views#readme",
   "dependencies": {
-    "async": "^2.5.0",
     "aug": "^2.0.0",
     "boom": "^6.0.0",
-    "hoek": "^5.0.0",
-    "js-yaml": "^3.10.0",
-    "str2fn": "2.0.0",
-    "varson": "^2.0.2",
-    "wreck": "^12.5.0"
+    "p-props": "^1.1.0",
+    "varson": "^2.0.2"
   },
   "devDependencies": {
-    "code": "^4.0.0",
+    "code": "^5.1.2",
     "coveralls": "^2.11.8",
     "eslint": "^4.9.0",
     "eslint-config-firstandthird": "^4.0.1",
     "eslint-plugin-import": "^2.8.0",
     "handlebars": "^4.0.11",
-    "hapi": "^16.6.2",
-    "lab": "^12.1.0",
-    "vision": "^4.0.1"
+    "hapi": "^17.0.1",
+    "lab": "^15.1.2",
+    "vision": "^5.2.0"
   }
 }
