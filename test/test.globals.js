@@ -9,8 +9,10 @@ lab.test('server methods', async() => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
   });
-  server.method('yaml', (request, yamlFile) => {
+  server.method('yaml', (param1, param2) => {
     return new Promise((resolve) => {
+      expect(param1).to.equal(1234);
+      expect(param2).to.equal('5678')
       return resolve({ test1: true });
     });
   });
@@ -25,7 +27,7 @@ lab.test('server methods', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{methods.yaml()}",
+              yaml1: "{methods.yaml(1234, '5678')}",
             }
           }
         }
