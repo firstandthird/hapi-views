@@ -5,6 +5,10 @@ const renderHandler = require('./lib/handler.js');
 const defaults = {
   enableCache: false,
   serveStale: false,
+  varsonSettings: {
+    start: '{',
+    end: '}'
+  },
   allowDebugQuery: true, //allows ?json=1
   routeConfig: {},
   debug: false,

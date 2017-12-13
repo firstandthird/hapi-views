@@ -25,7 +25,7 @@ lab.test('server methods', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{{methods.yaml(`${process.cwd()}/test/yaml/test1.yaml`)}}",
+              yaml1: "{methods.yaml()}",
             }
           }
         }
@@ -64,7 +64,7 @@ lab.test('globals', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{{methods.yaml(`${process.cwd()}/test/yaml/test1.yaml`)}}",
+              yaml1: "{methods.yaml()}",
             }
           }
         },
@@ -104,7 +104,7 @@ lab.test('onError', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{{methods.makeError()}}",
+              yaml1: "{methods.makeError()}",
             }
           }
         }
@@ -138,7 +138,7 @@ lab.test('per-route onError', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{{methods.yaml(`${process.cwd()}/test/yaml/test1.yaml`)}}",
+              yaml1: "{methods.yaml()}",
             },
             onError: (err, h) => {
               expect(err).to.not.equal(null);
@@ -181,7 +181,7 @@ lab.test('preprocess', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{{methods.yaml(`${process.cwd()}/test/yaml/test1.yaml`)}}",
+              yaml1: "{methods.yaml()}",
             },
             preProcess: (request, options, h) => { processRan = true; }
           }
@@ -199,7 +199,6 @@ lab.test('preprocess', async() => {
   expect(processRan).to.equal(true);
   await server.stop();
 });
-
 
 lab.test('preResponse', async() => {
   let processRan = false;
@@ -222,7 +221,7 @@ lab.test('preResponse', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{{methods.yaml(`${process.cwd()}/test/yaml/test1.yaml`)}}",
+              yaml1: "{methods.yaml()}",
             },
             preResponse: (request, options, h) => { processRan = true; }
           }
@@ -238,5 +237,48 @@ lab.test('preResponse', async() => {
   const response = await server.inject({ url: '/yaml' });
   expect(response.statusCode).to.equal(200);
   expect(processRan).to.equal(true);
+  await server.stop();
+});
+
+lab.test('varson setting', async() => {
+  const server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' }
+  });
+  server.method('yaml', (request, yamlFile) => {
+    return new Promise((resolve) => {
+      return resolve({ test1: true });
+    });
+  });
+  await server.register([
+    require('vision'),
+    {
+      plugin: require('../'),
+      options: {
+        debug: true,
+        dataPath: `${process.cwd()}/test/yaml`,
+        varsonSettings: {
+          start: '{{',
+          end: '}}'
+        },
+        routes: {
+          '/yaml': {
+            view: 'yaml',
+            data: {
+              yaml1: '{{methods.yaml()}}',
+            }
+          }
+        }
+      }
+    }
+  ]);
+  server.views({
+    engines: { html: require('handlebars') },
+    path: `${__dirname}/views`
+  });
+  await server.start();
+  // tests
+  const response = await server.inject({ url: '/yaml' });
+  const context = response.request.response.source.context;
+  expect(context).to.equal({ yaml1: { test1: true } });
   await server.stop();
 });
