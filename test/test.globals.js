@@ -92,13 +92,14 @@ lab.test('onError', async() => {
     port: 9991
   });
   server.method('makeError', () => { throw new Error('this is an error'); });
+  let theError;
   await server.register([
     require('vision'),
     {
       plugin: require('../'),
       options: {
         onError: (err, h) => {
-          expect(err).to.not.equal(null);
+          theError = err;
           return 'the error was handled';
         },
         debug: true,
@@ -106,7 +107,7 @@ lab.test('onError', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{methods.makeError()}",
+              yaml1: '{the_undefinable}',
             }
           }
         }
@@ -120,7 +121,8 @@ lab.test('onError', async() => {
   await server.start();
   const response = await server.inject({ url: '/yaml' });
   expect(response.statusCode).to.equal(200);
-  expect(response.result).to.equal('the error was handled');
+  expect(theError).to.not.equal(null);
+  expect(theError.toString()).to.equal('ReferenceError: the_undefinable is not defined');
   await server.stop();
 });
 
@@ -129,7 +131,7 @@ lab.test('per-route onError', async() => {
     debug: { log: 'hapi-views' },
     port: 9991
   });
-  server.method('makeError', () => { throw new Error('this is an error'); });
+  let theError;
   await server.register([
     require('vision'),
     {
@@ -140,10 +142,10 @@ lab.test('per-route onError', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{methods.yaml()}",
+              yaml1: '{the_undefinable}',
             },
             onError: (err, h) => {
-              expect(err).to.not.equal(null);
+              theError = err;
               return 'the error was handled';
             }
           }
@@ -158,7 +160,8 @@ lab.test('per-route onError', async() => {
   await server.start();
   const response = await server.inject({ url: '/yaml' });
   expect(response.statusCode).to.equal(200);
-  expect(response.result).to.equal('the error was handled');
+  expect(theError).to.not.equal(undefined);
+  expect(theError.toString()).to.equal('ReferenceError: the_undefinable is not defined');
   await server.stop();
 });
 
@@ -282,5 +285,47 @@ lab.test('varson setting', async() => {
   const response = await server.inject({ url: '/yaml' });
   const context = response.request.response.source.context;
   expect(context).to.equal({ yaml1: { test1: true } });
+  await server.stop();
+});
+
+lab.test('?json=1', async () => {
+  const server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' }
+  });
+  server.method('yaml', (request, yamlFile) => {
+    return new Promise((resolve) => {
+      return resolve({ test1: true });
+    });
+  });
+  await server.register([
+    require('vision'),
+    {
+      plugin: require('../'),
+      options: {
+        debug: true,
+        dataPath: `${process.cwd()}/test/yaml`,
+        varsonSettings: {
+          start: '{{',
+          end: '}}'
+        },
+        routes: {
+          '/yaml': {
+            view: 'yaml',
+            data: {
+              yaml1: '{{methods.yaml()}}',
+            }
+          }
+        }
+      }
+    }
+  ]);
+  server.views({
+    engines: { html: require('handlebars') },
+    path: `${__dirname}/views`
+  });
+  await server.start();
+  // tests
+  const response = await server.inject({ url: '/yaml?json=1' });
+  expect(response.headers['content-type']).to.contain('application/json');
   await server.stop();
 });
