@@ -3,19 +3,15 @@
 const aug = require('aug');
 const renderHandler = require('./lib/handler.js');
 const defaults = {
-  enableCache: false,
-  serveStale: false,
+  allowJson: true,
   varsonSettings: {
     start: '{',
     end: '}'
   },
-  allowDebugQuery: true, //allows ?json=1
-  routeConfig: {},
-  debug: false,
-  views: {}
+  routeConfig: {}
 };
 
-const register = async (server, options) => {
+const register = (server, options) => {
   options = Object.assign({}, defaults, options);
   Object.keys(options.routes).forEach((path) => {
     const config = options.routes[path];

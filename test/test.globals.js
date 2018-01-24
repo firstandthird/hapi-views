@@ -12,7 +12,7 @@ lab.test('server methods', async() => {
   server.method('yaml', (param1, param2) => {
     return new Promise((resolve) => {
       expect(param1).to.equal(1234);
-      expect(param2).to.equal('5678')
+      expect(param2).to.equal('5678');
       return resolve({ test1: true });
     });
   });
@@ -288,7 +288,7 @@ lab.test('varson setting', async() => {
   await server.stop();
 });
 
-lab.test('?json=1', async () => {
+lab.test('?json=1 will return the JSON content', async () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
   });
@@ -327,5 +327,7 @@ lab.test('?json=1', async () => {
   // tests
   const response = await server.inject({ url: '/yaml?json=1' });
   expect(response.headers['content-type']).to.contain('application/json');
+  expect(typeof response.result).to.equal('object');
+  expect(response.result).to.equal({ yaml1: { test1: true } });
   await server.stop();
 });
