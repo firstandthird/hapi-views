@@ -3,7 +3,7 @@
 const aug = require('aug');
 const renderHandler = require('./lib/handler.js');
 const defaults = {
-  allowJson: true,
+  allowDebugJson: true,
   varsonSettings: {
     start: '{',
     end: '}'
