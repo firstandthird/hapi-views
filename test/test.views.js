@@ -1,5 +1,3 @@
-'use strict';
-
 const Lab = require('lab');
 const lab = exports.lab = Lab.script();
 const expect = require('code').expect;
@@ -27,7 +25,7 @@ lab.test('server methods', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{methods.yaml(1234, '5678')}",
+              yaml1: "yaml(1234, '5678')",
             }
           }
         }
@@ -43,6 +41,52 @@ lab.test('server methods', async() => {
   const response = await server.inject({ url: '/yaml' });
   const context = response.request.response.source.context;
   expect(context).to.equal({ yaml1: { test1: true } });
+  await server.stop();
+});
+
+lab.test('server methods with request params', async() => {
+  const server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' }
+  });
+  server.method('test', (param1, param2) => {
+    return new Promise((resolve) => {
+      expect(param1).to.equal('hello');
+      expect(param2).to.equal('5678');
+      return resolve({ test1: true });
+    });
+  });
+  await server.register([
+    require('vision'),
+    {
+      plugin: require('../'),
+      options: {
+        debug: true,
+        routes: {
+          '/{slug}': {
+            view: 'yaml',
+            data: {
+              method: 'test(request.params.slug, "5678")',
+              string: 'string',
+              number: 123
+            }
+          }
+        }
+      }
+    }
+  ]);
+  server.views({
+    engines: { html: require('handlebars') },
+    path: `${__dirname}/views`
+  });
+  await server.start();
+  // tests
+  const response = await server.inject({ url: '/hello' });
+  const context = response.request.response.source.context;
+  expect(context).to.equal({
+    method: { test1: true },
+    string: 'string',
+    number: 123
+  });
   await server.stop();
 });
 
@@ -66,7 +110,7 @@ lab.test('globals', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{methods.yaml()}",
+              yaml1: 'yaml()',
             }
           }
         },
@@ -82,17 +126,20 @@ lab.test('globals', async() => {
   });
   const response = await server.inject({ url: '/yaml' });
   const context = response.request.response.source.context;
-  expect(context.yaml2).to.equal({ property: 1235 });
+  expect(context).to.equal({
+    yaml1: { test1: true },
+    yaml2: { property: 1235 }
+  });
   await server.stop();
 });
 
 lab.test('onError', async() => {
   const server = new Hapi.Server({
-    debug: { log: 'hapi-views' },
+    debug: { log: 'hapi-views', request: '*' },
     port: 9991
   });
   server.method('makeError', () => { throw new Error('this is an error'); });
-  let theError;
+  let theError = null;
   await server.register([
     require('vision'),
     {
@@ -107,7 +154,7 @@ lab.test('onError', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: '{the_undefinable}',
+              yaml1: 'makeError()',
             }
           }
         }
@@ -122,7 +169,7 @@ lab.test('onError', async() => {
   const response = await server.inject({ url: '/yaml' });
   expect(response.statusCode).to.equal(200);
   expect(theError).to.not.equal(null);
-  expect(theError.toString()).to.equal('ReferenceError: the_undefinable is not defined');
+  expect(theError.toString()).to.equal('Error: this is an error');
   await server.stop();
 });
 
@@ -132,6 +179,7 @@ lab.test('per-route onError', async() => {
     port: 9991
   });
   let theError;
+  server.method('makeError', () => { throw new Error('this is an error'); });
   await server.register([
     require('vision'),
     {
@@ -142,7 +190,7 @@ lab.test('per-route onError', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: '{the_undefinable}',
+              yaml1: 'makeError()',
             },
             onError: (err, h) => {
               theError = err;
@@ -161,14 +209,14 @@ lab.test('per-route onError', async() => {
   const response = await server.inject({ url: '/yaml' });
   expect(response.statusCode).to.equal(200);
   expect(theError).to.not.equal(undefined);
-  expect(theError.toString()).to.equal('ReferenceError: the_undefinable is not defined');
+  expect(theError.toString()).to.equal('Error: this is an error');
   await server.stop();
 });
 
 lab.test('preprocess', async() => {
   let processRan = false;
   const server = new Hapi.Server({
-    debug: { log: 'hapi-views' },
+    debug: { log: 'hapi-views', request: '*' },
     port: 9991
   });
   server.method('yaml', (request, yamlFile) => {
@@ -186,7 +234,7 @@ lab.test('preprocess', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{methods.yaml()}",
+              yaml1: "yaml()",
             },
             preProcess: (request, options, h) => { processRan = true; }
           }
@@ -226,7 +274,7 @@ lab.test('preResponse', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "{methods.yaml()}",
+              yaml1: "yaml()",
             },
             preResponse: (request, options, h) => { processRan = true; }
           }
@@ -242,49 +290,6 @@ lab.test('preResponse', async() => {
   const response = await server.inject({ url: '/yaml' });
   expect(response.statusCode).to.equal(200);
   expect(processRan).to.equal(true);
-  await server.stop();
-});
-
-lab.test('varson setting', async() => {
-  const server = new Hapi.Server({
-    debug: { request: '*', log: 'hapi-views' }
-  });
-  server.method('yaml', (request, yamlFile) => {
-    return new Promise((resolve) => {
-      return resolve({ test1: true });
-    });
-  });
-  await server.register([
-    require('vision'),
-    {
-      plugin: require('../'),
-      options: {
-        debug: true,
-        dataPath: `${process.cwd()}/test/yaml`,
-        varsonSettings: {
-          start: '{{',
-          end: '}}'
-        },
-        routes: {
-          '/yaml': {
-            view: 'yaml',
-            data: {
-              yaml1: '{{methods.yaml()}}',
-            }
-          }
-        }
-      }
-    }
-  ]);
-  server.views({
-    engines: { html: require('handlebars') },
-    path: `${__dirname}/views`
-  });
-  await server.start();
-  // tests
-  const response = await server.inject({ url: '/yaml' });
-  const context = response.request.response.source.context;
-  expect(context).to.equal({ yaml1: { test1: true } });
   await server.stop();
 });
 
@@ -312,7 +317,7 @@ lab.test('?json=1 will return the JSON content', async () => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: '{{methods.yaml()}}',
+              yaml1: 'yaml()',
             }
           }
         }

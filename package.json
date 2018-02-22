@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
-    "test": "lab --leaks",
+    "test": "lab --bail --leaks",
     "test-travis": "lab -r lcov | ./node_modules/.bin/coveralls"
   },
   "repository": {
@@ -27,14 +27,15 @@
     "aug": "^2.0.0",
     "boom": "^6.0.0",
     "p-props": "^1.1.0",
-    "varson": "^2.0.2"
+    "str2fn": "^5.0.0",
+    "varson": "^2.0.3"
   },
   "devDependencies": {
     "code": "^5.1.2",
     "coveralls": "^2.11.8",
-    "eslint": "^4.9.0",
-    "eslint-config-firstandthird": "^4.0.1",
-    "eslint-plugin-import": "^2.8.0",
+    "eslint": "^4.18.1",
+    "eslint-config-firstandthird": "^4.3.0",
+    "eslint-plugin-import": "^2.9.0",
     "handlebars": "^4.0.11",
     "hapi": "^17.0.1",
     "lab": "^15.1.2",
