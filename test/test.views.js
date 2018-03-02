@@ -253,6 +253,45 @@ lab.test('preprocess', async() => {
   await server.stop();
 });
 
+
+lab.test('preprocess with redirect', async() => {
+  const server = new Hapi.Server({
+    debug: { log: 'hapi-views', request: '*' },
+    port: 9991
+  });
+  server.method('doData', (request, opts) => {
+    return { something: 'for nothing' };
+  });
+
+  await server.register([
+    require('vision'),
+    {
+      plugin: require('../'),
+      options: {
+        routes: {
+          '/not-here': {
+            view: 'yaml',
+            data: {
+              yaml1: "doData()",
+            },
+            preProcess: (request, opts, h) => {
+              return h.redirect('/forward');
+            }
+          }
+        }
+      }
+    }
+  ]);
+  server.views({
+    engines: { html: require('handlebars') },
+    path: `${__dirname}/views`
+  });
+  await server.start();
+  const response = await server.inject({ url: '/not-here' });
+  expect(response.statusCode).to.equal(302);
+  await server.stop();
+});
+
 lab.test('preResponse', async() => {
   let processRan = false;
   const server = new Hapi.Server({
