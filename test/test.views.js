@@ -3,6 +3,10 @@ const lab = exports.lab = Lab.script();
 const expect = require('code').expect;
 const Hapi = require('hapi');
 
+const wait = (timeout) => {
+  return new Promise((resolve) => setTimeout(resolve, timeout));
+};
+
 lab.test('server methods', async() => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }
@@ -373,5 +377,83 @@ lab.test('?json=1 will return the JSON content', async () => {
   expect(response.headers['content-type']).to.contain('application/json');
   expect(typeof response.result).to.equal('object');
   expect(response.result).to.equal({ yaml1: { test1: true } });
+  await server.stop();
+});
+
+lab.test('returns stale data on cache error', async () => {
+  const server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' }
+  });
+
+  let requestCount = 0;
+
+  server.method('getData', (request, argg) => {
+    requestCount++;
+    if (requestCount === 1) {
+      return { something: 'sure' };
+    }
+    throw new Error();
+  }, {
+    cache: {
+      expiresIn: 60000,
+      staleIn: 20,
+      staleTimeout: 5,
+      dropOnError: false,
+      generateTimeout: 100
+    }
+  });
+
+  await server.register([
+    require('vision'),
+    {
+      plugin: require('../'),
+      options: {
+        debug: true,
+        dataPath: `${process.cwd()}/test/yaml`,
+        varsonSettings: {
+          start: '{{',
+          end: '}}'
+        },
+        routes: {
+          '/yaml': {
+            view: 'yaml',
+            data: {
+              yaml1: 'getData()',
+            }
+          }
+        }
+      }
+    }
+  ]);
+
+  server.views({
+    engines: { html: require('handlebars') },
+    path: `${__dirname}/views`
+  });
+  await server.start();
+  // tests
+  const response = await server.inject({ url: '/yaml' });
+  expect(response.statusCode).to.equal(200);
+  
+  const context = response.request.response.source.context;
+  expect(context).to.equal({ yaml1: { something: 'sure' } });
+
+  await wait(21);
+
+  const resp2 = await server.inject({ url: '/yaml' });
+  expect(resp2.statusCode).to.equal(200);
+
+  const context2 = resp2.request.response.source.context;
+  expect(context2).to.equal({ yaml1: { something: 'sure' } }); // stale
+
+  await wait(3);
+  
+  const resp3 = await server.inject({ url: '/yaml' });
+  expect(resp3.statusCode).to.equal(200);
+
+  const context3 = resp3.request.response.source.context;
+  expect(context3).to.equal({ yaml1: { something: 'sure' } }); // stale (non dropped)
+
+
   await server.stop();
 });
