@@ -257,7 +257,6 @@ lab.test('preprocess', async() => {
   await server.stop();
 });
 
-
 lab.test('preprocess with redirect', async() => {
   const server = new Hapi.Server({
     debug: { log: 'hapi-views', request: '*' },
@@ -307,7 +306,8 @@ lab.test('preResponse', async() => {
       return resolve({ test1: true });
     });
   });
-
+  let passedData;
+  let passedH;
   await server.register([
     require('vision'),
     {
@@ -317,9 +317,13 @@ lab.test('preResponse', async() => {
           '/yaml': {
             view: 'yaml',
             data: {
-              yaml1: "yaml()",
+              yaml1: 'yaml()',
             },
-            preResponse: (request, options, h) => { processRan = true; }
+            preResponse: (request, options, data, h) => {
+              passedData = data;
+              passedH = h;
+              processRan = true;
+            }
           }
         }
       }
@@ -331,6 +335,8 @@ lab.test('preResponse', async() => {
   });
   await server.start();
   const response = await server.inject({ url: '/yaml' });
+  expect(passedData.yaml1.test1).to.equal(true);
+  expect(typeof passedH.response).to.equal('function');
   expect(response.statusCode).to.equal(200);
   expect(processRan).to.equal(true);
   await server.stop();
@@ -434,7 +440,7 @@ lab.test('returns stale data on cache error', async () => {
   // tests
   const response = await server.inject({ url: '/yaml' });
   expect(response.statusCode).to.equal(200);
-  
+
   const context = response.request.response.source.context;
   expect(context).to.equal({ yaml1: { something: 'sure' } });
 
@@ -447,7 +453,7 @@ lab.test('returns stale data on cache error', async () => {
   expect(context2).to.equal({ yaml1: { something: 'sure' } }); // stale
 
   await wait(3);
-  
+
   const resp3 = await server.inject({ url: '/yaml' });
   expect(resp3.statusCode).to.equal(200);
 
@@ -455,5 +461,43 @@ lab.test('returns stale data on cache error', async () => {
   expect(context3).to.equal({ yaml1: { something: 'sure' } }); // stale (non dropped)
 
 
+  await server.stop();
+});
+
+lab.test('preResponse can take over a response ', async() => {
+  let processRan = false;
+  const server = new Hapi.Server({
+    debug: { log: 'hapi-views' },
+    port: 9991
+  });
+  server.method('yaml', (request, yamlFile) => {
+    return new Promise((resolve) => {
+      return resolve({ test1: true });
+    });
+  });
+  await server.register([
+    require('vision'),
+    {
+      plugin: require('../'),
+      options: {
+        routes: {
+          '/yaml': {
+            view: 'yaml',
+            data: {
+              yaml1: 'yaml()',
+            },
+            preResponse: (request, options, data, h) => h.response().redirect('/newLocation')
+          }
+        }
+      }
+    }
+  ]);
+  server.views({
+    engines: { html: require('handlebars') },
+    path: `${__dirname}/views`
+  });
+  await server.start();
+  const response = await server.inject({ url: '/yaml' });
+  expect(response.statusCode).to.equal(302);
   await server.stop();
 });
