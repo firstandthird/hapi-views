@@ -84,7 +84,7 @@ lab.test('server methods with request params', async() => {
   });
   await server.start();
   // tests
-  const response = await server.inject({ url: '/hello' });
+  const response = await server.inject({ url: '/hello?debug=1' });
   const context = response.request.response.source.context;
   expect(context).to.equal({
     method: { test1: true },
