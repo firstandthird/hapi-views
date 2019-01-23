@@ -28,7 +28,8 @@
     "boom": "^6.0.0",
     "p-props": "^1.1.0",
     "str2fn": "^5.0.0",
-    "varson": "^2.0.3"
+    "varson": "^2.0.3",
+    "hapi-process-data": "firstandthird/hapi-process-data#9d77ad232388e207750e344d637f377f372c9829"
   },
   "devDependencies": {
     "code": "^5.1.2",
