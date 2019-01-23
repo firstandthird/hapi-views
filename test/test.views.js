@@ -84,7 +84,7 @@ lab.test('server methods with request params', async() => {
   });
   await server.start();
   // tests
-  const response = await server.inject({ url: '/hello?debug=1' });
+  const response = await server.inject({ url: '/hello' });
   const context = response.request.response.source.context;
   expect(context).to.equal({
     method: { test1: true },
@@ -383,6 +383,53 @@ lab.test('?json=1 will return the JSON content', async () => {
   expect(response.headers['content-type']).to.contain('application/json');
   expect(typeof response.result).to.equal('object');
   expect(response.result).to.equal({ yaml1: { test1: true } });
+  await server.stop();
+});
+
+lab.test('?debug=1 will log debug info', async () => {
+  const server = new Hapi.Server({});
+  server.method('yaml', (request, yamlFile) => {
+    return new Promise((resolve) => {
+      return resolve({ test1: true });
+    });
+  });
+  await server.register([
+    require('vision'),
+    {
+      plugin: require('../'),
+      options: {
+        debug: true,
+        dataPath: `${process.cwd()}/test/yaml`,
+        varsonSettings: {
+          start: '{{',
+          end: '}}'
+        },
+        routes: {
+          '/yaml': {
+            view: 'yaml',
+            data: {
+              yaml1: 'yaml()',
+            }
+          }
+        }
+      }
+    }
+  ]);
+  server.views({
+    engines: { html: require('handlebars') },
+    path: `${__dirname}/views`
+  });
+
+  let logged = 0;
+  server.events.on('log', (tags, msg) => {
+    logged++;
+  });
+
+  await server.start();
+  // tests
+  const response = await server.inject({ url: '/yaml?debug=1' });
+  expect(response.statusCode).to.equal(200);
+  expect(logged).to.equal(3);
   await server.stop();
 });
 
