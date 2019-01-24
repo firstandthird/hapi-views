@@ -386,6 +386,53 @@ lab.test('?json=1 will return the JSON content', async () => {
   await server.stop();
 });
 
+lab.test('?debug=1 will log debug info', async () => {
+  const server = new Hapi.Server({});
+  server.method('yaml', (request, yamlFile) => {
+    return new Promise((resolve) => {
+      return resolve({ test1: true });
+    });
+  });
+  await server.register([
+    require('vision'),
+    {
+      plugin: require('../'),
+      options: {
+        debug: true,
+        dataPath: `${process.cwd()}/test/yaml`,
+        varsonSettings: {
+          start: '{{',
+          end: '}}'
+        },
+        routes: {
+          '/yaml': {
+            view: 'yaml',
+            data: {
+              yaml1: 'yaml()',
+            }
+          }
+        }
+      }
+    }
+  ]);
+  server.views({
+    engines: { html: require('handlebars') },
+    path: `${__dirname}/views`
+  });
+
+  let logged = 0;
+  server.events.on('log', (tags, msg) => {
+    logged++;
+  });
+
+  await server.start();
+  // tests
+  const response = await server.inject({ url: '/yaml?debug=1' });
+  expect(response.statusCode).to.equal(200);
+  expect(logged).to.equal(3);
+  await server.stop();
+});
+
 lab.test('returns stale data on cache error', async () => {
   const server = new Hapi.Server({
     debug: { request: '*', log: 'hapi-views' }

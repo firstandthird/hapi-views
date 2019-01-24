@@ -28,7 +28,8 @@
     "boom": "^6.0.0",
     "p-props": "^1.1.0",
     "str2fn": "^5.0.0",
-    "varson": "^2.0.3"
+    "varson": "^2.0.3",
+    "@firstandthird/process-data": "^0.0.1"
   },
   "devDependencies": {
     "code": "^5.1.2",
