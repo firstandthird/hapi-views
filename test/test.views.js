@@ -137,6 +137,53 @@ lab.test('globals', async() => {
   await server.stop();
 });
 
+lab.test('grouped', async() => {
+  const server = new Hapi.Server({
+    debug: { request: '*', log: 'hapi-views' }
+  });
+  server.method('yaml', (request, yamlFile) => {
+    return new Promise((resolve) => {
+      return resolve({ test1: true });
+    });
+  });
+  // start server
+  await server.register([
+    require('vision'),
+    {
+      plugin: require('../'),
+      options: {
+        dataPath: `${process.cwd()}/test/yaml`,
+        routes: {
+          '/yaml': {
+            view: 'yaml',
+            groupedData: {
+              grouped: true
+            },
+            data: {
+              yaml1: 'yaml()',
+            }
+          }
+        },
+        globals: {
+          yaml2: { property: 1235 }
+        }
+      }
+    }
+  ]);
+  server.views({
+    engines: { html: require('handlebars') },
+    path: `${__dirname}/views`
+  });
+  const response = await server.inject({ url: '/yaml' });
+  const context = response.request.response.source.context;
+  expect(context).to.equal({
+    yaml1: { test1: true },
+    yaml2: { property: 1235 },
+    grouped: true
+  });
+  await server.stop();
+});
+
 lab.test('onError', async() => {
   const server = new Hapi.Server({
     debug: { log: 'hapi-views', request: '*' },
