@@ -146,6 +146,11 @@ lab.test('grouped', async() => {
       return resolve({ test1: true });
     });
   });
+  server.method('yaml2', (request, yamlFile) => {
+    return new Promise((resolve) => {
+      return resolve({ yaml2: { property: 1235 } });
+    });
+  });
   // start server
   await server.register([
     require('vision'),
@@ -164,9 +169,7 @@ lab.test('grouped', async() => {
             }
           }
         },
-        globals: {
-          yaml2: { property: 1235 }
-        }
+        globals: 'yaml2()'
       }
     }
   ]);
