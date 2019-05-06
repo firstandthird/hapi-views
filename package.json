@@ -24,22 +24,22 @@
   },
   "homepage": "https://github.com/firstandthird/hapi-views#readme",
   "dependencies": {
-    "aug": "^2.0.0",
-    "boom": "^6.0.0",
+    "@firstandthird/process-data": "^0.0.1",
+    "aug": "^3.0.1",
+    "boom": "^7.3.0",
     "p-props": "^1.1.0",
     "str2fn": "^5.0.0",
-    "varson": "^2.0.3",
-    "@firstandthird/process-data": "^0.0.1"
+    "varson": "^2.0.3"
   },
   "devDependencies": {
     "code": "^5.1.2",
-    "coveralls": "^2.11.8",
-    "eslint": "^4.18.1",
+    "coveralls": "^3.0.3",
+    "eslint": "^5.16.0",
     "eslint-config-firstandthird": "^4.3.0",
-    "eslint-plugin-import": "^2.9.0",
-    "handlebars": "^4.0.11",
-    "hapi": "^17.0.1",
-    "lab": "^15.1.2",
+    "eslint-plugin-import": "^2.17.2",
+    "handlebars": "^4.1.2",
+    "hapi": "^17.8.5",
+    "lab": "^18.0.2",
     "vision": "^5.2.0"
   }
 }
