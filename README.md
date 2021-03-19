@@ -3,58 +3,115 @@
 [![Build Status](https://travis-ci.org/firstandthird/hapi-views.svg?branch=master)](https://travis-ci.org/firstandthird/hapi-views)
 [![Coverage Status](https://coveralls.io/repos/github/firstandthird/hapi-views/badge.svg?branch=master)](https://coveralls.io/github/firstandthird/hapi-views?branch=master)
 
-`hapi-views` is a hapi plugin that lets you quickly and easily create your view routes. You use JSON to specify routes that can pull in dynamic data from any source, then use that data to render an HTML page.  
+`hapi-views` is a hapi plugin that lets you quickly create view routes. You use JSON (or YAML) to specify routes that can pull in dynamic data from any source, then use that data to render an HTML page.
+
 ## Features
 
-* works with any Hapi view engine
-* define view routes with JSON instead of programming route handlers
+* works with any Hapi-compatible view engine
+* define view routes with concise JSON config files instead of programming route handlers in filthy Javascript
 * specify dynamic JSON for your views with [varson](https://github.com/firstandthird/varson)
 * pull in data with Hapi server methods
 
 ## Usage
 
-```javascript
+```js
+server.method('getUserInfo', async(id) => {
+  const user = await fetch(id);
+  return user;
+});
 await server.register({
   plugin: require('hapi-views'),
   options: {
-    // 'globals' (optional) specifies global data that is common to all views
-    // data.serverName and data.db will be available to the view engine:
-    globals: {
-      serverName: 'Bob the Server',
-      db: 'http://55.55.55.5555:2121/bobDb'
-    }
-    // "routes" can contain as many view routes as you like
-    // the key is the URL and the value is an object that specifies how to process the view for that URL
     routes: {
-      // the URL for this route will be 'http://yourhost.com/homepage/{userId}'
       '/homepage/{userId}': {
-        // 'view' (required) tells the view engine what HTML template to use:
         view: 'homepage',
-        // 'data' (required) tells the view engine what context data to use when rendering the HTML
-        // this data is itself processed by the template engine in varson:
         data: {
-          // an example of a literal string value:
           title: "Your Homepage",
-          // varson evaluates string values inside the double-bracket '{{' delimiters as Javascript.
-          // So the view engine will see data.amount as 35:
           amount: "{{ 15 + 25 }}",
-          // the Hapi request object (https://hapijs.com/api#request) can be referenced directly:
-          userId: "{{request.params.userId}}",
-          // Hapi server methods (https://hapijs.com/api#server.method()) can be referenced as 'methods'.
-          // for example, this expression will set data.userInfo to the value returned by calling server.methods.getUserInfo. Works for methods that return a promise as well:
-          userInfo: "{{methods.getUserInfo(request.params.userId)}}"
-        },
-        // 'preProcess' (optional) will be called before the request is processed:
-        preProcess: (request, options, h) => {  }
-        // 'preResponse (optional) will be called after the request is processed but before the view is returned:
-        preResponse: (request, options, h) => { processRan = true; }
-        // 'onError' (optional) will be called if there is an error processing your data or view.
-        // The value returned by onError will be the result your route returns to the client:
-        onError: (err, h) => { return boom.badImplementation('this was an error') }
+          userInfo: "{{getUserInfo(request.params.userId)}}"
+        }
       }
     }
   }
 });
 ```
 
-  See [test/test.global.js](https://github.com/firstandthird/hapi-views/blob/master/test/test.globals.js) for working examples.
+- For each key in _routes_, hapi-views will register a route handler matching that path.  The route will render the indicated _view_, passing _data_ as the context of the view.
+- hapi-views uses the [varson](https://github.com/firstandthird/varson) library to evaluate statements that appear in the double brackets.  Any method defined in _server.methods_ will be available from here and you can refer to the _request_ object in the method parameters, eg: _foo(request.params.userId)_ will work as expected from here.
+- passing '?debug=1' to a route will cause the server to log debug info as it renders the route
+
+## Route Options
+
+- __view__ (required)
+
+  The name of the view to render, the view must be available to the render engine you registered with hapi.
+
+- __data__ (required)
+
+  The data to pass to the rendering method
+
+- __groupedData__
+
+  An object containing additional data you can pass to the rendering method
+
+- __preProcess__
+
+  A method that takes in _(request, options, h)_ as parameters and is called after the request is processed, but before the view is returned,
+  you can use _preProcess_ to do any preprocessing you need
+
+- __preResponse__
+
+  A method that takes in a function that takes in _(request, options, h)_ as parameters and is called after the view has been rendered, but before it
+  is returned to the client
+
+- __onError__
+
+  A method that takes in _(err, h)_ as parameters and is called any time there is an error processing your route.  If _onError_ is defined then
+  whatever value it returns will be passed back to the client.
+
+
+## Top-Level Options
+
+- __globals__
+
+  An object that will be merged with the data field and passed to each render function.
+
+- __allowDebugJson__ (default is false)
+
+  When this is set to true, you can pass '?json=1' to a view route and it will
+  return the render data for the route instead of rendering the view
+
+## Example
+```javascript
+server.method('getUserInfo', async(id) => {
+  const user = await db.users.findOne({ _id: id });
+  return user;
+});
+
+await server.register({
+  plugin: require('hapi-views'),
+  options: {
+    globals: {
+      serverName: 'Bob the Server',
+      db: 'http://55.55.55.5555:2121/bobDb'
+    },
+    routes: {
+      '/homepage/{userId}': {
+        view: 'homepage',
+        data: {
+          title: "Your Homepage",
+          amount: "{{ 15 + 25 }}",
+          userInfo: "{{getUserInfo(request.params.userId)}}"
+        },
+        preProcess: (request, options, h) => {
+          request.server.log('Going to render the view');
+        },
+        preResponse: (request, options, h) => {
+          request.server.log('View has been rendered!');
+        },
+        onError: (err, h) => { return 'There was an error processing your request' }
+      }
+    }
+  }
+});
+```
