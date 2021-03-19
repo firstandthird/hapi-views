@@ -28,7 +28,6 @@ await server.register({
         data: {
           title: "Your Homepage",
           amount: "{{ 15 + 25 }}",
-          userId: "{{request.params.userId}}",
           userInfo: "{{getUserInfo(request.params.userId)}}"
         }
       }
@@ -38,7 +37,7 @@ await server.register({
 ```
 
 - For each key in _routes_, hapi-views will register a route handler matching that path.  The route will render the indicated _view_, passing _data_ as the context of the view.
-- hapi-views uses the [varson](https://github.com/firstandthird/varson) library to evaluate statements that appear in the double brackets.  hapi-views provides access to the _request_ object and any method defined in _server.methods_ will be available from here.
+- hapi-views uses the [varson](https://github.com/firstandthird/varson) library to evaluate statements that appear in the double brackets.  Any method defined in _server.methods_ will be available from here and you can refer to the _request_ object in the method parameters, eg: _foo(request.params.userId)_ will work as expected from here.
 - passing '?debug=1' to a route will cause the server to log debug info as it renders the route
 
 ## Route Options
@@ -102,7 +101,6 @@ await server.register({
         data: {
           title: "Your Homepage",
           amount: "{{ 15 + 25 }}",
-          userId: "{{request.params.userId}}",
           userInfo: "{{getUserInfo(request.params.userId)}}"
         },
         preProcess: (request, options, h) => {
